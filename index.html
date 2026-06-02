@@ -36,7 +36,16 @@ details{background:white;border:1px solid var(--line);border-radius:12px;padding
     <p class="muted">JW.org 페이지는 브라우저에서 직접 읽기 어려워 Cloudflare Worker가 대신 가져옵니다.</p>
     <input id="workerUrl" placeholder="Cloudflare Worker 주소">
     <p class="small muted">이 값은 이 브라우저에만 저장됩니다. Worker가 아직 없다면 GitHub 저장소의 <b>worker.js</b>를 Cloudflare Worker에 배포해야 합니다.</p>
-    <button id="checkWorkerBtn" class="ghost" style="margin-top:10px">Worker 연결 확인</button>
+    <div class="row" style="margin-top:10px">
+      <button id="checkWorkerBtn" class="ghost">Worker 연결 확인</button>
+      <button id="copyWorkerCodeBtn" class="ghost">Worker 코드 복사</button>
+      <button id="copyWranglerBtn" class="ghost">배포 명령 복사</button>
+    </div>
+    <details style="margin-top:10px">
+      <summary>Worker를 만드는 방법</summary>
+      <p class="muted">Cloudflare Workers에서 새 Worker를 만들고, <b>Worker 코드 복사</b>를 누른 뒤 편집기에 붙여넣어 배포하세요. 배포 주소를 이 칸에 넣고 <b>Worker 연결 확인</b>을 누르면 됩니다.</p>
+      <p class="small muted">Wrangler를 쓰는 경우: <code>npx wrangler deploy</code></p>
+    </details>
   </section>
 
   <section class="panel">
@@ -318,6 +327,20 @@ checkWorkerBtn.onclick=async()=>{
     showStatus('Worker 연결 성공: '+(data.title||'자료를 읽었습니다.'));
   }catch(e){showStatus('Worker 연결 실패: '+e.message)}
 }
+copyWorkerCodeBtn.onclick=async()=>{
+  try{
+    showStatus('Worker 코드를 가져오는 중입니다...');
+    const res=await fetch('./worker.js?v='+Date.now());
+    if(!res.ok)throw new Error('worker.js를 읽지 못했습니다: '+res.status);
+    await copyText(await res.text());
+    showStatus('Worker 코드를 복사했습니다. Cloudflare Worker 편집기에 붙여넣으세요.');
+  }catch(e){showStatus('Worker 코드 복사 실패: '+e.message)}
+}
+copyWranglerBtn.onclick=async()=>{
+  const command='npx wrangler deploy --name jw-study-fetcher';
+  await copyText(command);
+  showStatus('배포 명령을 복사했습니다: '+command);
+}
 reportBtn.onclick=()=>{if(currentData)report.innerHTML=buildReport(currentData);else showStatus('먼저 자료를 가져오세요.')}
 copyReportBtn.onclick=async()=>{
   if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
@@ -346,6 +369,14 @@ window.loadSaved=encoded=>{const url=decodeURIComponent(encoded);const raw=local
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escapeAttr(s){return escapeHtml(s).replace(/`/g,'&#096;')}
 function groupBy(items,fn){return items.reduce((map,item)=>{const key=fn(item);(map[key]||(map[key]=[])).push(item);return map},{})}
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){
+    memo.value=(memo.value?memo.value+'\n\n':'')+text;
+    throw new Error('클립보드가 막혀 메모 칸에 넣었습니다.');
+  }
+}
 function buildPlainReport(data){
   const sections=data.sections||{};
   const relatedPages=data.relatedPages||[];
