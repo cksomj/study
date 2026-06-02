@@ -111,7 +111,62 @@ async function extractPage(target) {
     blocks.flatMap(b => Array.from(b.text.matchAll(/[가-힣]{1,6}\s?\d{1,3}:\d{1,3}(?:-\d{1,3})?/g)).map(x => x[0]))
   )).slice(0, 80);
 
-  return { url: target, title, blocks, verses, related };
+  const sections = buildMeetingSections(blocks);
+
+  return { url: target, title, blocks, verses, related, sections };
+}
+
+function buildMeetingSections(blocks) {
+  const definitions = [
+    { key: "opening", title: "소개", starts: ["노래"], ends: ["성경에 담긴 보물"] },
+    { key: "treasures", title: "성경에 담긴 보물", starts: ["성경에 담긴 보물"], ends: ["야외 봉사에 힘쓰십시오"] },
+    { key: "spiritualGems", title: "영적 보물 찾기", starts: ["영적 보물 찾기"], ends: ["성경 낭독"] },
+    { key: "bibleReading", title: "성경 낭독", starts: ["성경 낭독"], ends: ["야외 봉사에 힘쓰십시오"] },
+    { key: "ministry", title: "야외 봉사에 힘쓰십시오", starts: ["야외 봉사에 힘쓰십시오"], ends: ["그리스도인 생활"] },
+    { key: "christianLife", title: "그리스도인 생활", starts: ["그리스도인 생활"], ends: ["회중 성서 연구"] },
+    { key: "congregationBibleStudy", title: "회중 성서 연구", starts: ["회중 성서 연구"], ends: ["맺음말", "노래"] }
+  ];
+
+  const sections = {};
+  for (const def of definitions) {
+    const items = sliceBlocks(blocks, def.starts, def.ends);
+    sections[def.key] = {
+      title: def.title,
+      blocks: items,
+      questions: extractQuestions(items),
+      keywords: extractKeywords(items)
+    };
+  }
+  sections.bibleRange = findBibleRange(blocks);
+  return sections;
+}
+
+function sliceBlocks(blocks, starts, ends) {
+  const start = blocks.findIndex(block => starts.some(term => block.text.includes(term)));
+  if (start < 0) return [];
+  const end = blocks.findIndex((block, index) => index > start && ends.some(term => block.text.includes(term)));
+  return blocks.slice(start, end > 0 ? end : blocks.length);
+}
+
+function extractQuestions(blocks) {
+  return blocks
+    .map(block => block.text)
+    .map(text => text.replace(/\s*답을 적는 칸\s*$/g, "").trim())
+    .filter(text => /[?？]$|습니까\?|나요\?/.test(text))
+    .slice(0, 20);
+}
+
+function extractKeywords(blocks) {
+  const stopWords = new Set(["그리고", "하지만", "우리", "여러분", "무엇", "어떻게", "자료", "관련", "동영상", "성경", "다음", "질문"]);
+  const words = blocks
+    .flatMap(block => Array.from(block.text.matchAll(/[가-힣A-Za-z0-9]{2,}/g)).map(match => match[0]))
+    .filter(word => !stopWords.has(word));
+  return Array.from(new Set(words)).slice(0, 30);
+}
+
+function findBibleRange(blocks) {
+  const range = blocks.find(block => /^[가-힣]+\s*\d+-\d+장$|예레미야\s*\d+-\d+장/.test(block.text));
+  return range ? range.text : "";
 }
 
 function isUsefulStudyLink(url) {
