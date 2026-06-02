@@ -18,7 +18,7 @@ button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;
 .warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
-.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
 @media(max-width:820px){.grid,.two,.draft-grid{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}.app{padding:12px}h1{font-size:26px}.hero,.panel{border-radius:14px;padding:14px}.report-card{padding:13px}.tabs button{flex:1 1 46%;min-height:42px}}
 </style>
@@ -210,6 +210,7 @@ function buildReport(data){
   const studyPages=findCandidates(relatedPages, textOf(study), ['훈','하느님','왕국','성서 연구']);
   const studyPage=findStudyPage(relatedPages, study, studyPages);
   return `
+    <div id="selectedDraftSummary" class="selected-summary"></div>
     ${reportCard('성경에 담긴 보물', '연설 부분입니다. 핵심 주제와 근거 자료를 미리 파악하는 데 초점을 둡니다.', [
       guidanceList(['연설 원고를 쓰기보다 중심 사상, 근거 성구, 적용점을 먼저 잡습니다.','질문형 문장은 제외하고 연설 본문에 직접 나오는 요점만 우선 봅니다.']),
       pointList(topPoints(filterNonQuestions(treasures),5)),
@@ -453,7 +454,7 @@ copyWranglerBtn.onclick=async()=>{
   await copyText(command);
   showStatus('배포 명령을 복사했습니다: '+command);
 }
-reportBtn.onclick=()=>{if(currentData)report.innerHTML=buildReport(currentData);else showStatus('먼저 자료를 가져오세요.')}
+reportBtn.onclick=()=>{if(currentData){report.innerHTML=buildReport(currentData);hydrateDraftInputs()}else showStatus('먼저 자료를 가져오세요.')}
 copyReportBtn.onclick=async()=>{
   if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
   const draftText=draftSummaryText();
@@ -568,10 +569,29 @@ function hydrateDraftInputs(){
       next[id]={...(next[id]||{}),[field]:field==='selected'?input.checked:input.value};
       writeDrafts(next);
       if(field==='selected')input.closest('.question-card')?.classList.toggle('selected',input.checked);
+      renderSelectedSummary();
     };
     input.oninput=save;
     input.onchange=save;
   });
+  renderSelectedSummary();
+}
+function renderSelectedSummary(){
+  const box=$('selectedDraftSummary');
+  if(!box)return;
+  const drafts=readDrafts();
+  const selected=Object.values(drafts).filter(d=>d&&d.selected);
+  if(!selected.length){
+    box.innerHTML='<h3>선택한 해설</h3><p class="empty">해설할 질문을 체크하면 여기에 모입니다.</p>';
+    return;
+  }
+  box.innerHTML='<h3>선택한 해설</h3>'+selected.map((d,i)=>`
+    <div class="summary-item">
+      <b>${escapeHtml(d.short||d.draft||'해설 초안 '+(i+1))}</b>
+      ${d.verse?`<p class="small"><span class="tag">${escapeHtml(d.verse)}</span></p>`:''}
+      ${d.apply?`<p>${escapeHtml(d.apply)}</p>`:''}
+      ${d.draft?`<p class="muted">${escapeHtml(d.draft)}</p>`:''}
+    </div>`).join('');
 }
 function draftSummaryText(url=currentUrl){
   const drafts=readDrafts(url);
