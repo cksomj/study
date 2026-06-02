@@ -559,6 +559,12 @@ function hydrateDraftInputs(){
   report.querySelectorAll('[data-draft]').forEach(input=>{
     const id=input.dataset.draft;
     const field=input.dataset.field;
+    const card=input.closest('.question-card');
+    const savedQuestion=card?.dataset.question||'';
+    if(savedQuestion&&drafts[id]?.question!==savedQuestion){
+      drafts[id]={...(drafts[id]||{}),question:savedQuestion};
+      writeDrafts(drafts);
+    }
     if(field==='selected'){
       input.checked=!!drafts[id]?.selected;
       input.closest('.question-card')?.classList.toggle('selected',input.checked);
