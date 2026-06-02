@@ -149,18 +149,21 @@ function renderData(data){
 function buildReport(data){
   const blocks=data.blocks||[];
   const relatedPages=data.relatedPages||[];
-  const bibleRange=findBibleRange(blocks);
-  const treasures=sliceSection(blocks,['성경에 담긴 보물'],['야외 봉사에 힘쓰십시오']);
-  const gems=sliceSection(blocks,['영적 보물 찾기'],['성경 낭독']);
-  const christian=sliceSection(blocks,['그리스도인 생활'],['회중 성서 연구']);
-  const study=sliceSection(blocks,['회중 성서 연구'],['맺음말']);
+  const sections=data.sections||{};
+  const bibleRange=sections.bibleRange||findBibleRange(blocks);
+  const treasures=getSectionBlocks(data,'treasures',['성경에 담긴 보물'],['야외 봉사에 힘쓰십시오']);
+  const gems=getSectionBlocks(data,'spiritualGems',['영적 보물 찾기'],['성경 낭독']);
+  const christian=getSectionBlocks(data,'christianLife',['그리스도인 생활'],['회중 성서 연구']);
+  const study=getSectionBlocks(data,'congregationBibleStudy',['회중 성서 연구'],['맺음말']);
+  const gemQuestions=(sections.spiritualGems?.questions||extractQuestions(gems)).slice(0,2);
+  const christianQuestions=sections.christianLife?.questions||extractQuestions(christian);
   return `
     ${reportCard('성경에 담긴 보물', '연설 부분입니다. 핵심 주제와 근거 자료를 미리 파악하는 데 초점을 둡니다.', [
       pointList(topPoints(treasures,6)),
       candidatePages('참조 링크에서 볼 주요점', findCandidates(relatedPages, textOf(treasures), ['예레미야','두려','자격','힘','파10','여호와']))
     ])}
     ${reportCard('영적 보물 찾기 - 첫 번째 질문', '질문에 직접 답할 수 있도록 관련 성구와 참조 링크의 요점을 보여 줍니다.', [
-      questionList(extractQuestions(gems).slice(0,2)),
+      questionList(gemQuestions),
       candidatePages('질문 답 후보 자료', findCandidates(relatedPages, textOf(gems), ['렘 2:28','예레','불충실','유대','무엇을 배울']))
     ])}
     ${reportCard('이번 주 성경 읽기에서 찾을 보물', `상단 성경 범위: ${escapeHtml(bibleRange||'확인 필요')}. 이 범위에서 해설에 쓸 만한 주요점을 찾습니다.`, [
@@ -168,7 +171,7 @@ function buildReport(data){
       candidatePages('성구와 관련 자료 후보', findCandidates(relatedPages, bibleRange || textOf(blocks), ['렘','예레미야','Jeremiah','성경']))
     ])}
     ${reportCard('그리스도인 생활', '동영상과 토의 질문을 보고 답을 준비하는 부분입니다. 질문별로 관련 자료 후보를 찾습니다.', [
-      questionList(extractQuestions(christian)),
+      questionList(christianQuestions),
       candidatePages('동영상/토의 답 후보 자료', findCandidates(relatedPages, textOf(christian), ['예레미야','친구','용기','온화','존경','변호','의의 결과','동영상']))
     ])}
     ${reportCard('회중 성서 연구', '지정된 장의 흐름과 주요점을 리포트처럼 정리해 토의 준비에 사용합니다.', [
@@ -176,6 +179,12 @@ function buildReport(data){
       candidatePages('연구 자료 주요점 후보', findCandidates(relatedPages, textOf(study), ['훈','하느님','왕국','성서 연구']))
     ])}
   `;
+}
+
+function getSectionBlocks(data,key,starts,ends){
+  const section=data.sections?.[key];
+  if(section&&Array.isArray(section.blocks)&&section.blocks.length)return section.blocks;
+  return sliceSection(data.blocks||[],starts,ends);
 }
 
 function reportCard(title, desc, parts){
