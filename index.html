@@ -167,6 +167,7 @@ function buildReport(data){
     ])}
     ${reportCard('영적 보물 찾기 - 첫 번째 질문', '질문에 직접 답할 수 있도록 관련 성구와 참조 링크의 요점을 보여 줍니다.', [
       questionList(gemQuestions),
+      questionAnswerCards(gemQuestions, relatedPages, textOf(gems)),
       candidatePages('질문 답 후보 자료', findCandidates(relatedPages, textOf(gems), ['렘 2:28','예레','불충실','유대','무엇을 배울']))
     ])}
     ${reportCard('이번 주 성경 읽기에서 찾을 보물', `상단 성경 범위: ${escapeHtml(bibleRange||'확인 필요')}. 이 범위에서 해설에 쓸 만한 주요점을 찾습니다.`, [
@@ -175,6 +176,7 @@ function buildReport(data){
     ])}
     ${reportCard('그리스도인 생활', '동영상과 토의 질문을 보고 답을 준비하는 부분입니다. 질문별로 관련 자료 후보를 찾습니다.', [
       questionList(christianQuestions),
+      questionAnswerCards(christianQuestions, relatedPages, textOf(christian)),
       candidatePages('동영상/토의 답 후보 자료', findCandidates(relatedPages, textOf(christian), ['예레미야','친구','용기','온화','존경','변호','의의 결과','동영상']))
     ])}
     ${reportCard('회중 성서 연구', '지정된 장의 흐름과 주요점을 리포트처럼 정리해 토의 준비에 사용합니다.', [
@@ -201,6 +203,22 @@ function questionList(items){
   if(!items.length)return '<p class="muted">질문을 찾지 못했습니다.</p>';
   return items.map(q=>`<div class="question">${escapeHtml(q)}</div>`).join('');
 }
+function questionAnswerCards(questions,pages,sectionText){
+  if(!questions.length)return '';
+  return `<h4>질문별 답 후보</h4>`+questions.map(q=>{
+    const candidates=findAnswerCandidates(q,pages,sectionText).slice(0,3);
+    const body=candidates.length
+      ? candidates.map(c=>`
+        <details class="candidate">
+          <summary>${escapeHtml(c.title||c.sourceText||c.url)}</summary>
+          <p><span class="tag">${escapeHtml(c.sourceType||'자료')}</span></p>
+          <p class="small muted"><a href="${escapeAttr(c.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
+          ${pointList(c.snippets.slice(0,4))}
+        </details>`).join('')
+      : '<p class="muted">가져온 링크 내용에서 직접적인 답 후보를 찾지 못했습니다.</p>';
+    return `<div class="card"><b>${escapeHtml(q)}</b>${body}</div>`;
+  }).join('');
+}
 function candidatePages(label,pages){
   if(!pages.length)return `<h4>${escapeHtml(label)}</h4><p class="muted">가져온 링크 내용에서 뚜렷한 후보를 찾지 못했습니다. 링크 전체 탭에서 직접 확인해 보세요.</p>`;
   return `<h4>${escapeHtml(label)}</h4>`+pages.slice(0,6).map(p=>`
@@ -210,6 +228,26 @@ function candidatePages(label,pages){
       <p class="small muted">${escapeHtml(p.sourceText||'')}<br><a href="${escapeAttr(p.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
       ${pointList(pageSnippets(p).slice(0,5))}
     </details>`).join('');
+}
+
+function findAnswerCandidates(question,pages,sectionText){
+  const words=[...new Set([...importantWords(question), ...importantWords(sectionText).slice(0,8)])].filter(Boolean);
+  return (pages||[]).filter(p=>!p.error).map(page=>{
+    const snippets=rankSnippets(page.blocks||[],words).slice(0,6);
+    const hay=((page.title||'')+' '+(page.sourceText||'')+' '+textOf(page.blocks||[])).toLowerCase();
+    const score=words.reduce((n,w)=>n+(hay.includes(String(w).toLowerCase())?1:0),0)+(snippets.length*2);
+    return {...page,score,snippets};
+  }).filter(p=>p.score>0&&p.snippets.length).sort((a,b)=>b.score-a.score);
+}
+
+function rankSnippets(blocks,words){
+  return (blocks||[])
+    .map(b=>b.text||'')
+    .filter(text=>text.length>14)
+    .map(text=>({text,score:words.reduce((n,w)=>n+(text.includes(w)?1:0),0)}))
+    .filter(item=>item.score>0)
+    .sort((a,b)=>b.score-a.score)
+    .map(item=>item.text);
 }
 
 function findCandidates(pages, sectionText, keywords){
@@ -320,20 +358,28 @@ function buildPlainReport(data){
     bibleRange?'성경 범위: '+bibleRange:'',
     '',
     plainSection('성경에 담긴 보물', getSectionBlocks(data,'treasures',['성경에 담긴 보물'],['야외 봉사에 힘쓰십시오']), relatedPages, ['예레미야','두려','자격','힘','여호와']),
-    plainSection('영적 보물 찾기', getSectionBlocks(data,'spiritualGems',['영적 보물 찾기'],['성경 낭독']), relatedPages, ['렘 2:28','예레','불충실','유대']),
+    plainSection('영적 보물 찾기', getSectionBlocks(data,'spiritualGems',['영적 보물 찾기'],['성경 낭독']), relatedPages, ['렘 2:28','예레','불충실','유대'], sections.spiritualGems?.questions||[]),
     plainSection('이번 주 성경 읽기에서 찾을 보물', blocks.filter(b=>/예레미야|렘 |두려|여호와|불충실|돌아오|자격/.test(b.text)), relatedPages, ['렘','예레미야','성경']),
-    plainSection('그리스도인 생활', getSectionBlocks(data,'christianLife',['그리스도인 생활'],['회중 성서 연구']), relatedPages, ['예레미야','친구','용기','온화','존경','변호','동영상']),
+    plainSection('그리스도인 생활', getSectionBlocks(data,'christianLife',['그리스도인 생활'],['회중 성서 연구']), relatedPages, ['예레미야','친구','용기','온화','존경','변호','동영상'], sections.christianLife?.questions||[]),
     plainSection('회중 성서 연구', getSectionBlocks(data,'congregationBibleStudy',['회중 성서 연구'],['맺음말']), relatedPages, ['훈','하느님','왕국','성서 연구'])
   ];
   return parts.filter(Boolean).join('\n');
 }
-function plainSection(title, blocks, relatedPages, keywords){
+function plainSection(title, blocks, relatedPages, keywords, questions=[]){
   const points=topPoints(blocks,6).map(x=>'- '+x).join('\n')||'- 본문에서 자동 요점을 찾지 못했습니다.';
+  const answers=questions.length?questions.map(q=>{
+    const candidates=findAnswerCandidates(q,relatedPages,textOf(blocks)).slice(0,2);
+    const body=candidates.map(c=>{
+      const snippets=c.snippets.slice(0,2).map(x=>'    · '+x).join('\n');
+      return `  - [${c.sourceType||'자료'}] ${c.title||c.sourceText||c.url}\n    ${c.url||''}${snippets?'\n'+snippets:''}`;
+    }).join('\n')||'  - 후보 자료 없음';
+    return `- ${q}\n${body}`;
+  }).join('\n'):'';
   const candidates=findCandidates(relatedPages,textOf(blocks),keywords).slice(0,4).map(page=>{
     const snippets=pageSnippets(page).slice(0,3).map(x=>'  · '+x).join('\n');
     return `- [${page.sourceType||'자료'}] ${page.title||page.sourceText||page.url}\n  ${page.url||''}${snippets?'\n'+snippets:''}`;
   }).join('\n')||'- 후보 자료 없음';
-  return `\n[${title}]\n주요점\n${points}\n\n후보 자료\n${candidates}\n`;
+  return `\n[${title}]\n주요점\n${points}${answers?'\n\n질문별 답 후보\n'+answers:''}\n\n후보 자료\n${candidates}\n`;
 }
 renderSaved();
 </script>
