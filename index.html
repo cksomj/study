@@ -5,29 +5,35 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>JW 생활과 봉사 예습 앱</title>
 <style>
-:root{--bg:#f4f1ea;--card:#fffdf8;--ink:#263238;--muted:#64706a;--line:#e4ded2;--brand:#5b7f71;--accent:#b77b4b}
+:root{--bg:#f5f2ea;--card:#fffdf8;--ink:#253238;--muted:#65716c;--line:#e3dbce;--brand:#506f62;--accent:#b67647;--soft:#edf4ef;--warn:#fff7ea}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
-.app{max-width:1100px;margin:auto;padding:18px}.hero,.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin:14px 0;box-shadow:0 12px 28px #00000012}
-.hero{background:linear-gradient(135deg,#fffdf8,#eaf3ef)}h1{margin:0 0 8px;font-size:34px}h2{margin:0 0 12px}.muted{color:var(--muted);line-height:1.65}
-.row{display:flex;gap:10px;align-items:center}.row input{flex:1}.row.wrap{flex-wrap:wrap}input,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px;font-size:16px;background:white}
-button,a.btn{border:0;border-radius:14px;background:var(--brand);color:#fff;padding:13px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}button.secondary{background:var(--accent)}button.ghost{background:white;color:var(--brand);border:1px solid var(--line)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:16px}.small{font-size:13px}.tag{display:inline-block;background:#e8f0ec;color:#2f5e50;border-radius:999px;padding:7px 10px;margin:4px;font-weight:800;font-size:13px}
-.content p{line-height:1.85}.content h1,.content h2,.content h3{margin-top:24px}.linkList a{display:block;background:white;border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;color:var(--ink);text-decoration:none}.warn{background:#fff7ea;border:1px solid #ead7bb;border-radius:16px;padding:12px;color:#744f29}
-pre{white-space:pre-wrap;background:#1f2937;color:#e5e7eb;border-radius:16px;padding:14px;overflow:auto}
-@media(max-width:760px){.grid{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}}
+.app{max-width:1180px;margin:auto;padding:18px}.hero,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 10px 26px #00000010}
+.hero{background:linear-gradient(135deg,#fffdf8,#e9f2ee)}h1{margin:0 0 8px;font-size:32px}h2{margin:0 0 12px;font-size:22px}h3{margin:18px 0 8px}
+.muted{color:var(--muted);line-height:1.65}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center}.row input{flex:1}
+input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px;background:white}textarea{min-height:150px}
+button,a.btn{border:0;border-radius:12px;background:var(--brand);color:#fff;padding:12px 14px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
+button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;color:var(--brand);border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:14px}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}.tag{display:inline-block;background:var(--soft);color:#2f5e50;border-radius:999px;padding:6px 9px;margin:3px;font-weight:800;font-size:12px}
+.warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
+.linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
+.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
+details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800}
+@media(max-width:820px){.grid,.two{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}.app{padding:12px}h1{font-size:26px}}
 </style>
 </head>
 <body>
 <div class="app">
   <section class="hero">
-    <p class="tag">생활과 봉사 예습 노트</p>
-    <h1>JW.org 주간 자료 가져오기</h1>
-    <p class="muted">주간 교재 URL을 넣고 버튼을 누르면, Cloudflare Worker가 해당 주간 페이지와 관련 JW.org 자료 링크를 읽어 개인 예습 화면으로 정리합니다.</p>
+    <p class="tag">생활과 봉사 예습 리포트</p>
+    <h1>JW.org 자료를 읽고 해설 후보 찾기</h1>
+    <p class="muted">주간 교재 본문을 먼저 보여 주고, 그 안의 JW.org 링크를 가져와서 프로그램별로 핵심 내용과 질문 답변 후보를 정리합니다.</p>
   </section>
 
   <section class="panel">
     <h2>1. Worker 주소 설정</h2>
-    <p class="muted">Cloudflare Worker 배포 후 아래에 Worker 주소를 넣으세요. 예: https://jw-study-fetcher.내계정.workers.dev</p>
+    <p class="muted">JW.org 페이지는 브라우저에서 직접 읽기 어려워 Cloudflare Worker가 대신 가져옵니다.</p>
     <input id="workerUrl" placeholder="Cloudflare Worker 주소">
     <p class="small muted">이 값은 이 브라우저에만 저장됩니다.</p>
   </section>
@@ -35,130 +41,226 @@ pre{white-space:pre-wrap;background:#1f2937;color:#e5e7eb;border-radius:16px;pad
   <section class="panel">
     <h2>2. 주간 교재 URL</h2>
     <div class="row">
-      <input id="pageUrl" placeholder="JW.org 주간 교재 URL을 붙여넣으세요">
-      <button id="fetchBtn">이번 주 전체 자료 가져오기</button>
+      <input id="pageUrl" placeholder="JW.org 생활과 봉사 주간 교재 URL">
+      <button id="fetchBtn">본문과 링크 자료 가져오기</button>
     </div>
-    <div class="row wrap" style="margin-top:10px">
-      <button class="ghost" data-sample="https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-9월-10월-집회-교재/생활과-봉사-집회-계획표-2026년-9월-7-13일/">9월 7-13일 예시</button>
-      <button class="ghost" data-sample="https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-9월-10월-집회-교재/생활과-봉사-집회-계획표-2026년-10월-12-18일/">10월 12-18일 예시</button>
+    <div class="row" style="margin-top:10px">
+      <button class="ghost" id="sampleBtn">6월 1-7일 예시 넣기</button>
+      <button class="secondary" id="reportBtn">리포트 다시 만들기</button>
     </div>
     <p id="status" class="warn" style="display:none"></p>
   </section>
 
   <section class="grid">
-    <div class="panel">
-      <h2>가져온 자료 목록</h2>
-      <div id="savedList" class="linkList"></div>
-    </div>
-    <div class="panel">
-      <h2>나의 메모</h2>
-      <textarea id="memo" placeholder="예습 메모를 적으세요. 선택한 자료 URL 기준으로 저장됩니다."></textarea>
-      <button id="saveMemo" class="secondary" style="margin-top:10px">메모 저장</button>
-      <p id="memoState" class="small muted"></p>
-    </div>
-  </section>
+    <aside>
+      <section class="panel">
+        <h2>가져온 자료</h2>
+        <div id="savedList" class="linkList"></div>
+      </section>
+      <section class="panel">
+        <h2>나의 메모</h2>
+        <textarea id="memo" placeholder="해설 후보, 적용점, 질문 답을 적어 두세요."></textarea>
+        <button id="saveMemo" class="secondary" style="margin-top:10px">메모 저장</button>
+        <p id="memoState" class="small muted"></p>
+      </section>
+    </aside>
 
-  <section class="panel">
-    <h2 id="resultTitle">자료 내용</h2>
-    <p class="muted" id="sourceUrl"></p>
-    <div id="verses"></div>
-    <div id="content" class="content"></div>
-  </section>
-
-  <section class="panel">
-    <h2>관련 JW.org 자료</h2>
-    <p class="muted">주간 페이지 안에서 발견된 JW.org 내부 자료 링크입니다. “관련 자료 가져오기”를 누르면 해당 링크들도 요약 추출합니다.</p>
-    <div id="related" class="linkList"></div>
+    <main>
+      <section class="panel">
+        <h2 id="resultTitle">자료 내용</h2>
+        <p class="muted" id="sourceUrl"></p>
+        <div id="verses"></div>
+        <div class="tabs">
+          <button class="on" data-tab="report">예습 리포트</button>
+          <button data-tab="contentTab">본문</button>
+          <button data-tab="linksTab">링크 전체</button>
+          <button data-tab="relatedTab">가져온 링크 내용</button>
+        </div>
+        <div id="report" class="section on report"></div>
+        <div id="contentTab" class="section content"></div>
+        <div id="linksTab" class="section"></div>
+        <div id="relatedTab" class="section"></div>
+      </section>
+    </main>
   </section>
 
   <section class="panel">
     <h2>주의</h2>
-    <p class="muted">이 앱은 개인 예습용입니다. 가져온 본문을 공개 저장소나 웹사이트에 다시 게시하지 마세요. 자료의 공식 출처와 최신 내용은 항상 JW.org 원문을 기준으로 확인하세요.</p>
+    <p class="muted">이 앱은 개인 예습용입니다. 자료의 공식 출처와 최신 내용은 항상 JW.org 원문을 기준으로 확인하세요. 앱의 정리는 해설을 준비하기 위한 후보 자료입니다.</p>
   </section>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 let currentUrl='';
+let currentData=null;
+const sampleUrl='https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-5월-6월-집회-교재/생활과-봉사-집회-계획표-2026년-6월-1-7일/';
+
 workerUrl.value=localStorage.getItem('jwWorkerUrl')||'';
-pageUrl.value=localStorage.getItem('lastJwPageUrl')||'';
+pageUrl.value=localStorage.getItem('lastJwPageUrl')||sampleUrl;
 workerUrl.onchange=()=>localStorage.setItem('jwWorkerUrl',workerUrl.value.trim());
-document.querySelectorAll('[data-sample]').forEach(b=>b.onclick=()=>pageUrl.value=b.dataset.sample);
+sampleBtn.onclick=()=>pageUrl.value=sampleUrl;
+
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b===btn));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('on',s.id===btn.dataset.tab));
+});
 
 function showStatus(msg){status.style.display='block';status.textContent=msg}
 function hideStatus(){status.style.display='none'}
 function key(url){return 'jw-study-cache:'+url}
 function memoKey(url){return 'jw-study-memo:'+url}
 
-async function fetchFromWorker(url, deep=false){
+async function fetchFromWorker(url, deep=true){
   const w=workerUrl.value.trim().replace(/\/$/,'');
   if(!w){showStatus('먼저 Cloudflare Worker 주소를 입력하세요.');return}
   if(!url){showStatus('JW.org 주간 교재 URL을 입력하세요.');return}
   localStorage.setItem('jwWorkerUrl',w);
   localStorage.setItem('lastJwPageUrl',url);
-  showStatus('자료를 가져오는 중입니다...');
-  const api=w+'/?url='+encodeURIComponent(url)+'&deep='+(deep?'1':'0');
+  showStatus('본문과 링크 자료를 가져오는 중입니다. 링크가 많으면 시간이 조금 걸립니다...');
+  const api=w+'/?url='+encodeURIComponent(url)+'&deep='+(deep?'1':'0')+'&limit=50';
   const res=await fetch(api);
   if(!res.ok) throw new Error('Worker 응답 오류: '+res.status);
   const data=await res.json();
+  if(data.error) throw new Error(data.error);
   localStorage.setItem(key(url),JSON.stringify(data));
   currentUrl=url;
+  currentData=data;
   renderData(data);
   renderSaved();
   hideStatus();
 }
 
 function renderData(data){
+  currentData=data;
   currentUrl=data.url||currentUrl;
   resultTitle.textContent=data.title||'자료 내용';
-  sourceUrl.innerHTML=data.url?`원문: <a href="${data.url}" target="_blank" rel="noreferrer">${data.url}</a>`:'';
-  verses.innerHTML=(data.verses||[]).map(v=>`<span class="tag">${v}</span>`).join('');
-  content.innerHTML=(data.blocks||[]).map(b=>{
-    if(b.type==='h1'||b.type==='h2'||b.type==='h3') return `<${b.type}>${escapeHtml(b.text)}</${b.type}>`;
-    return `<p>${escapeHtml(b.text)}</p>`;
-  }).join('')||'<p class="muted">표시할 본문이 없습니다.</p>';
-  related.innerHTML=(data.related||[]).map(l=>`
-    <div class="card">
-      <b>${escapeHtml(l.text||l.url)}</b>
-      <p class="small muted">${escapeHtml(l.url)}</p>
-      <button class="ghost" onclick="fetchRelated('${encodeURIComponent(l.url)}')">관련 자료 가져오기</button>
-      <a class="btn" target="_blank" rel="noreferrer" href="${l.url}">원문 열기</a>
-    </div>`).join('')||'<p class="muted">관련 링크가 없습니다.</p>';
+  sourceUrl.innerHTML=data.url?`원문: <a href="${escapeAttr(data.url)}" target="_blank" rel="noreferrer">${escapeHtml(data.url)}</a>`:'';
+  verses.innerHTML=(data.verses||[]).map(v=>`<span class="tag">${escapeHtml(v)}</span>`).join('');
+  contentTab.innerHTML=(data.blocks||[]).map(renderBlock).join('')||'<p class="muted">표시할 본문이 없습니다.</p>';
+  linksTab.innerHTML=renderLinks(data);
+  relatedTab.innerHTML=renderRelatedPages(data);
+  report.innerHTML=buildReport(data);
   memo.value=localStorage.getItem(memoKey(currentUrl))||'';
   memoState.textContent=currentUrl?'메모 저장 기준: '+currentUrl:'';
 }
 
-window.fetchRelated=async encoded=>{
-  const url=decodeURIComponent(encoded);
-  await fetchFromWorker(url,false);
+function buildReport(data){
+  const blocks=data.blocks||[];
+  const relatedPages=data.relatedPages||[];
+  const bibleRange=findBibleRange(blocks);
+  const treasures=sliceSection(blocks,['성경에 담긴 보물'],['야외 봉사에 힘쓰십시오']);
+  const gems=sliceSection(blocks,['영적 보물 찾기'],['성경 낭독']);
+  const christian=sliceSection(blocks,['그리스도인 생활'],['회중 성서 연구']);
+  const study=sliceSection(blocks,['회중 성서 연구'],['맺음말']);
+  return `
+    ${reportCard('성경에 담긴 보물', '연설 부분입니다. 핵심 주제와 근거 자료를 미리 파악하는 데 초점을 둡니다.', [
+      pointList(topPoints(treasures,6)),
+      candidatePages('참조 링크에서 볼 주요점', findCandidates(relatedPages, textOf(treasures), ['예레미야','두려','자격','힘','파10','여호와']))
+    ])}
+    ${reportCard('영적 보물 찾기 - 첫 번째 질문', '질문에 직접 답할 수 있도록 관련 성구와 참조 링크의 요점을 보여 줍니다.', [
+      questionList(extractQuestions(gems).slice(0,2)),
+      candidatePages('질문 답 후보 자료', findCandidates(relatedPages, textOf(gems), ['렘 2:28','예레','불충실','유대','무엇을 배울']))
+    ])}
+    ${reportCard('이번 주 성경 읽기에서 찾을 보물', `상단 성경 범위: ${escapeHtml(bibleRange||'확인 필요')}. 이 범위에서 해설에 쓸 만한 주요점을 찾습니다.`, [
+      pointList(topPoints(blocks.filter(b=>/예레미야|렘 |두려|여호와|불충실|돌아오|자격/.test(b.text)),8)),
+      candidatePages('성구와 관련 자료 후보', findCandidates(relatedPages, bibleRange || textOf(blocks), ['렘','예레미야','Jeremiah','성경']))
+    ])}
+    ${reportCard('그리스도인 생활', '동영상과 토의 질문을 보고 답을 준비하는 부분입니다. 질문별로 관련 자료 후보를 찾습니다.', [
+      questionList(extractQuestions(christian)),
+      candidatePages('동영상/토의 답 후보 자료', findCandidates(relatedPages, textOf(christian), ['예레미야','친구','용기','온화','존경','변호','의의 결과','동영상']))
+    ])}
+    ${reportCard('회중 성서 연구', '지정된 장의 흐름과 주요점을 리포트처럼 정리해 토의 준비에 사용합니다.', [
+      pointList(topPoints(study,5)),
+      candidatePages('연구 자료 주요점 후보', findCandidates(relatedPages, textOf(study), ['훈','하느님','왕국','성서 연구']))
+    ])}
+  `;
 }
 
-fetchBtn.onclick=async()=>{
-  try{await fetchFromWorker(pageUrl.value.trim(),true)}
-  catch(e){showStatus(e.message)}
+function reportCard(title, desc, parts){
+  return `<article class="card"><h3>${escapeHtml(title)}</h3><p class="muted">${escapeHtml(desc)}</p>${parts.join('')}</article>`;
 }
-saveMemo.onclick=()=>{
-  if(!currentUrl){showStatus('먼저 자료를 가져오세요.');return}
-  localStorage.setItem(memoKey(currentUrl),memo.value);
-  memoState.textContent='메모가 저장되었습니다.';
+function pointList(points){
+  if(!points.length)return '<p class="muted">본문에서 자동으로 뽑은 요점이 아직 없습니다.</p>';
+  return `<ul>${points.map(p=>`<li>${escapeHtml(p)}</li>`).join('')}</ul>`;
+}
+function questionList(items){
+  if(!items.length)return '<p class="muted">질문을 찾지 못했습니다.</p>';
+  return items.map(q=>`<div class="question">${escapeHtml(q)}</div>`).join('');
+}
+function candidatePages(label,pages){
+  if(!pages.length)return `<h4>${escapeHtml(label)}</h4><p class="muted">가져온 링크 내용에서 뚜렷한 후보를 찾지 못했습니다. 링크 전체 탭에서 직접 확인해 보세요.</p>`;
+  return `<h4>${escapeHtml(label)}</h4>`+pages.slice(0,6).map(p=>`
+    <details class="candidate" open>
+      <summary>${escapeHtml(p.title||p.sourceText||p.url)}</summary>
+      <p class="small muted">${escapeHtml(p.sourceText||'')}<br><a href="${escapeAttr(p.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
+      ${pointList(pageSnippets(p).slice(0,5))}
+    </details>`).join('');
 }
 
+function findCandidates(pages, sectionText, keywords){
+  const words=[...new Set([...keywords, ...importantWords(sectionText).slice(0,10)])].filter(Boolean);
+  return (pages||[]).map(p=>{
+    const hay=(p.title+' '+p.sourceText+' '+textOf(p.blocks||[])).toLowerCase();
+    const score=words.reduce((n,w)=>n+(hay.includes(String(w).toLowerCase())?1:0),0);
+    return {...p,score};
+  }).filter(p=>p.score>0&&!p.error).sort((a,b)=>b.score-a.score);
+}
+function pageSnippets(page){
+  const titleWords=importantWords((page.title||'')+' '+(page.sourceText||''));
+  const blocks=(page.blocks||[]).map(b=>b.text).filter(t=>t&&t.length>12);
+  const scored=blocks.map(t=>({t,score:titleWords.reduce((n,w)=>n+(t.includes(w)?1:0),0)}));
+  return scored.sort((a,b)=>b.score-a.score).slice(0,7).map(x=>x.t);
+}
+function importantWords(text){
+  return [...new Set(String(text||'').match(/[가-힣A-Za-z0-9]{2,}/g)||[])]
+    .filter(w=>!/^(그리고|하지만|우리|여러분|무엇|어떻게|주간|자료|관련|링크|동영상|보여|답을|적는|있습니까|합니다)$/.test(w))
+    .slice(0,30);
+}
+function topPoints(blocks,max){
+  return (blocks||[]).map(b=>b.text).filter(t=>t&&t.length>14&&!/^(답을 적는 칸|재생|\(\d+분\)|\d+월|예 아니요|언어 )/.test(t)).slice(0,max);
+}
+function extractQuestions(blocks){
+  return (blocks||[]).map(b=>b.text).filter(t=>/[?？]$|습니까\?/.test(t)).slice(0,12);
+}
+function sliceSection(blocks,starts,ends){
+  const s=blocks.findIndex(b=>starts.some(x=>b.text.includes(x)));
+  if(s<0)return [];
+  const e=blocks.findIndex((b,i)=>i>s&&ends.some(x=>b.text.includes(x)));
+  return blocks.slice(s,e>0?e:blocks.length);
+}
+function findBibleRange(blocks){
+  const b=(blocks||[]).find(x=>/^[가-힣]+\s*\d+-\d+장$|예레미야\s*\d+-\d+장/.test(x.text));
+  return b?.text || '';
+}
+function textOf(blocks){return (blocks||[]).map(b=>b.text||'').join(' ')}
+function renderBlock(b){
+  if(b.type==='h1'||b.type==='h2'||b.type==='h3')return `<${b.type}>${escapeHtml(b.text)}</${b.type}>`;
+  return `<p>${escapeHtml(b.text)}</p>`;
+}
+function renderLinks(data){
+  const links=data.related||[];
+  if(!links.length)return '<p class="muted">링크가 없습니다.</p>';
+  return links.map((l,i)=>`<div class="card"><b>${i+1}. ${escapeHtml(l.text||l.url)}</b><p class="small muted">${escapeHtml(l.url)}</p><button class="ghost" onclick="fetchRelated('${encodeURIComponent(l.url)}')">이 링크만 가져오기</button> <a class="btn" href="${escapeAttr(l.url)}" target="_blank" rel="noreferrer">원문 열기</a></div>`).join('');
+}
+function renderRelatedPages(data){
+  const pages=data.relatedPages||[];
+  if(!pages.length)return '<p class="muted">아직 링크 내용을 가져오지 않았습니다. 본문과 링크 자료 가져오기를 누르세요.</p>';
+  return pages.map(p=>`<details><summary>${escapeHtml(p.title||p.url)}${p.error?' - 오류':''}</summary><p class="small muted">${escapeHtml(p.url)}</p>${p.error?`<p class="warn">${escapeHtml(p.error)}</p>`:pointList(topPoints(p.blocks||[],8))}</details>`).join('');
+}
+
+window.fetchRelated=async encoded=>{await fetchFromWorker(decodeURIComponent(encoded),false)}
+fetchBtn.onclick=async()=>{try{await fetchFromWorker(pageUrl.value.trim(),true)}catch(e){showStatus(e.message)}}
+reportBtn.onclick=()=>{if(currentData)report.innerHTML=buildReport(currentData);else showStatus('먼저 자료를 가져오세요.')}
+saveMemo.onclick=()=>{if(!currentUrl){showStatus('먼저 자료를 가져오세요.');return}localStorage.setItem(memoKey(currentUrl),memo.value);memoState.textContent='메모가 저장되었습니다.'}
 function renderSaved(){
   const items=[];
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i);
-    if(k&&k.startsWith('jw-study-cache:')){
-      try{const d=JSON.parse(localStorage.getItem(k));items.push({url:k.replace('jw-study-cache:',''),title:d.title||k})}catch(e){}
-    }
-  }
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('jw-study-cache:')){try{const d=JSON.parse(localStorage.getItem(k));items.push({url:k.replace('jw-study-cache:',''),title:d.title||k})}catch(e){}}}
   savedList.innerHTML=items.map(x=>`<a href="#" onclick="loadSaved('${encodeURIComponent(x.url)}');return false;"><b>${escapeHtml(x.title)}</b><br><span class="small muted">${escapeHtml(x.url)}</span></a>`).join('')||'<p class="muted">아직 저장된 자료가 없습니다.</p>';
 }
-window.loadSaved=encoded=>{
-  const url=decodeURIComponent(encoded);
-  const raw=localStorage.getItem(key(url));
-  if(raw){currentUrl=url;renderData(JSON.parse(raw))}
-}
+window.loadSaved=encoded=>{const url=decodeURIComponent(encoded);const raw=localStorage.getItem(key(url));if(raw){currentUrl=url;renderData(JSON.parse(raw))}}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function escapeAttr(s){return escapeHtml(s).replace(/`/g,'&#096;')}
 renderSaved();
 </script>
 </body>
