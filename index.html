@@ -346,6 +346,7 @@ function renderRelatedPages(data){
 
 window.fetchRelated=async encoded=>{await fetchFromWorker(decodeURIComponent(encoded),false)}
 fetchBtn.onclick=async()=>{try{await fetchFromWorker(pageUrl.value.trim(),true)}catch(e){showStatus(e.message)}}
+window.__studyFetch=async()=>fetchBtn.onclick();
 checkWorkerBtn.onclick=async()=>{
   try{
     const w=workerUrl.value.trim().replace(/\/$/,'');
@@ -497,6 +498,7 @@ function plainSection(title, blocks, relatedPages, keywords, questions=[]){
 }
 renderSaved();
 renderReportList();
+document.documentElement.dataset.studyReady='1';
 })();
 </script>
 </body>
