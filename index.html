@@ -122,7 +122,7 @@ const sampleBtn=$('sampleBtn');
 const reportBtn=$('reportBtn');
 const copyReportBtn=$('copyReportBtn');
 const saveReportBtn=$('saveReportBtn');
-const status=$('status');
+const statusBox=$('status');
 const savedList=$('savedList');
 const reportList=$('reportList');
 const memo=$('memo');
@@ -146,8 +146,8 @@ document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('on',s.id===btn.dataset.tab));
 });
 
-function showStatus(msg){status.style.display='block';status.textContent=msg}
-function hideStatus(){status.style.display='none'}
+function showStatus(msg){statusBox.style.display='block';statusBox.textContent=msg}
+function hideStatus(){statusBox.style.display='none'}
 function key(url){return 'jw-study-cache:'+url}
 function memoKey(url){return 'jw-study-memo:'+url}
 function reportKey(url){return 'jw-study-report:'+url}
