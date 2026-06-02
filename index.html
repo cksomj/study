@@ -35,7 +35,8 @@ details{background:white;border:1px solid var(--line);border-radius:12px;padding
     <h2>1. Worker 주소 설정</h2>
     <p class="muted">JW.org 페이지는 브라우저에서 직접 읽기 어려워 Cloudflare Worker가 대신 가져옵니다.</p>
     <input id="workerUrl" placeholder="Cloudflare Worker 주소">
-    <p class="small muted">이 값은 이 브라우저에만 저장됩니다.</p>
+    <p class="small muted">이 값은 이 브라우저에만 저장됩니다. Worker가 아직 없다면 GitHub 저장소의 <b>worker.js</b>를 Cloudflare Worker에 배포해야 합니다.</p>
+    <button id="checkWorkerBtn" class="ghost" style="margin-top:10px">Worker 연결 확인</button>
   </section>
 
   <section class="panel">
@@ -113,7 +114,7 @@ function memoKey(url){return 'jw-study-memo:'+url}
 
 async function fetchFromWorker(url, deep=true){
   const w=workerUrl.value.trim().replace(/\/$/,'');
-  if(!w){showStatus('먼저 Cloudflare Worker 주소를 입력하세요.');return}
+  if(!w){showStatus('먼저 Cloudflare Worker 주소를 입력하세요. 저장소의 worker.js를 Cloudflare Worker에 배포한 뒤 그 주소를 넣어야 합니다.');return}
   if(!url){showStatus('JW.org 주간 교재 URL을 입력하세요.');return}
   localStorage.setItem('jwWorkerUrl',w);
   localStorage.setItem('lastJwPageUrl',url);
@@ -193,6 +194,7 @@ function candidatePages(label,pages){
   return `<h4>${escapeHtml(label)}</h4>`+pages.slice(0,6).map(p=>`
     <details class="candidate" open>
       <summary>${escapeHtml(p.title||p.sourceText||p.url)}</summary>
+      <p><span class="tag">${escapeHtml(p.sourceType||'자료')}</span></p>
       <p class="small muted">${escapeHtml(p.sourceText||'')}<br><a href="${escapeAttr(p.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
       ${pointList(pageSnippets(p).slice(0,5))}
     </details>`).join('');
@@ -241,7 +243,11 @@ function renderBlock(b){
 function renderLinks(data){
   const links=data.related||[];
   if(!links.length)return '<p class="muted">링크가 없습니다.</p>';
-  return links.map((l,i)=>`<div class="card"><b>${i+1}. ${escapeHtml(l.text||l.url)}</b><p class="small muted">${escapeHtml(l.url)}</p><button class="ghost" onclick="fetchRelated('${encodeURIComponent(l.url)}')">이 링크만 가져오기</button> <a class="btn" href="${escapeAttr(l.url)}" target="_blank" rel="noreferrer">원문 열기</a></div>`).join('');
+  const groups=groupBy(links,l=>l.type||'JW.org 자료');
+  return Object.keys(groups).map(type=>`
+    <h3>${escapeHtml(type)} (${groups[type].length})</h3>
+    ${groups[type].map((l,i)=>`<div class="card"><b>${i+1}. ${escapeHtml(l.text||l.url)}</b><p><span class="tag">${escapeHtml(l.type||type)}</span></p><p class="small muted">${escapeHtml(l.url)}</p><button class="ghost" onclick="fetchRelated('${encodeURIComponent(l.url)}')">이 링크만 가져오기</button> <a class="btn" href="${escapeAttr(l.url)}" target="_blank" rel="noreferrer">원문 열기</a></div>`).join('')}
+  `).join('');
 }
 function renderRelatedPages(data){
   const pages=data.relatedPages||[];
@@ -251,6 +257,17 @@ function renderRelatedPages(data){
 
 window.fetchRelated=async encoded=>{await fetchFromWorker(decodeURIComponent(encoded),false)}
 fetchBtn.onclick=async()=>{try{await fetchFromWorker(pageUrl.value.trim(),true)}catch(e){showStatus(e.message)}}
+checkWorkerBtn.onclick=async()=>{
+  try{
+    const w=workerUrl.value.trim().replace(/\/$/,'');
+    if(!w){showStatus('Worker 주소를 먼저 입력하세요.');return}
+    showStatus('Worker 연결을 확인하는 중입니다...');
+    const res=await fetch(w+'/?url='+encodeURIComponent(sampleUrl)+'&deep=0');
+    const data=await res.json();
+    if(!res.ok||data.error)throw new Error(data.error||('Worker 응답 오류: '+res.status));
+    showStatus('Worker 연결 성공: '+(data.title||'자료를 읽었습니다.'));
+  }catch(e){showStatus('Worker 연결 실패: '+e.message)}
+}
 reportBtn.onclick=()=>{if(currentData)report.innerHTML=buildReport(currentData);else showStatus('먼저 자료를 가져오세요.')}
 saveMemo.onclick=()=>{if(!currentUrl){showStatus('먼저 자료를 가져오세요.');return}localStorage.setItem(memoKey(currentUrl),memo.value);memoState.textContent='메모가 저장되었습니다.'}
 function renderSaved(){
@@ -261,6 +278,7 @@ function renderSaved(){
 window.loadSaved=encoded=>{const url=decodeURIComponent(encoded);const raw=localStorage.getItem(key(url));if(raw){currentUrl=url;renderData(JSON.parse(raw))}}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escapeAttr(s){return escapeHtml(s).replace(/`/g,'&#096;')}
+function groupBy(items,fn){return items.reduce((map,item)=>{const key=fn(item);(map[key]||(map[key]=[])).push(item);return map},{})}
 renderSaved();
 </script>
 </body>
