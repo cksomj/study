@@ -31,6 +31,7 @@ export default {
               url: page.url,
               title: page.title,
               sourceText: link.text || "",
+              sourceType: classifyLink(link),
               blocks: page.blocks,
               verses: page.verses,
               relatedCount: page.related.length
@@ -93,7 +94,7 @@ async function extractPage(target) {
     if (!href.startsWith("https://www.jw.org/ko/")) continue;
     if (href.includes("#")) href = href.split("#")[0];
     if (!text) text = href;
-    links.push({ text, url: href });
+    links.push({ text, url: href, type: classifyUrl(href, text) });
   }
 
   const seen = new Set();
@@ -113,6 +114,20 @@ async function extractPage(target) {
 
 function isUsefulStudyLink(url) {
   return /\/라이브러리\/|\/성경\/|\/성경-공부\/|\/성경의-가르침\/|\/성경-질문\//.test(url);
+}
+
+function classifyLink(link) {
+  return classifyUrl(link.url, link.text);
+}
+
+function classifyUrl(url, text = "") {
+  const value = `${url} ${text}`;
+  if (/\/성경\/|^[가-힣]{1,6}\s?\d{1,3}:\d{1,3}/.test(value)) return "성구";
+  if (/동영상|\/미디어|\/동영상\//.test(value)) return "동영상";
+  if (/노래|음악|오디오/.test(value)) return "노래/오디오";
+  if (/읽가|랑제|훈|예레|파\d|파수대|깨어라/.test(value)) return "참조 출판물";
+  if (/집회-교재|생활과-봉사/.test(value)) return "집회 교재";
+  return "JW.org 자료";
 }
 
 function firstMatch(s, re) {
