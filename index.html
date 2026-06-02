@@ -18,7 +18,7 @@ button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;
 .warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
-.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
 @media(max-width:820px){.grid,.two,.draft-grid{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}.app{padding:12px}h1{font-size:26px}.hero,.panel{border-radius:14px;padding:14px}.report-card{padding:13px}.tabs button{flex:1 1 46%;min-height:42px}}
 </style>
@@ -271,7 +271,10 @@ function questionAnswerCards(questions,pages,sectionText){
           ${pointList(c.snippets.slice(0,4))}
         </details>`).join('')
       : '<p class="muted">가져온 링크 내용에서 직접적인 답 후보를 찾지 못했습니다.</p>';
-    return `<div class="card question-card" data-question-id="${escapeAttr(id)}"><b>${escapeHtml(q)}</b>${body}${draftForm(id)}</div>`;
+    return `<div class="card question-card" data-question-id="${escapeAttr(id)}">
+      <label class="pick-row"><input type="checkbox" data-draft="${escapeAttr(id)}" data-field="selected" value="1"> 이 질문으로 해설 준비</label>
+      <b>${escapeHtml(q)}</b>${body}${draftForm(id)}
+    </div>`;
   }).join('');
 }
 function draftForm(id){
@@ -554,20 +557,30 @@ function hydrateDraftInputs(){
   report.querySelectorAll('[data-draft]').forEach(input=>{
     const id=input.dataset.draft;
     const field=input.dataset.field;
-    input.value=drafts[id]?.[field]||'';
-    input.oninput=()=>{
+    if(field==='selected'){
+      input.checked=!!drafts[id]?.selected;
+      input.closest('.question-card')?.classList.toggle('selected',input.checked);
+    }else{
+      input.value=drafts[id]?.[field]||'';
+    }
+    const save=()=>{
       const next=readDrafts();
-      next[id]={...(next[id]||{}),[field]:input.value};
+      next[id]={...(next[id]||{}),[field]:field==='selected'?input.checked:input.value};
       writeDrafts(next);
+      if(field==='selected')input.closest('.question-card')?.classList.toggle('selected',input.checked);
     };
+    input.oninput=save;
+    input.onchange=save;
   });
 }
 function draftSummaryText(url=currentUrl){
   const drafts=readDrafts(url);
   const lines=[];
-  Object.values(drafts).forEach((d,i)=>{
+  const entries=Object.values(drafts).filter(d=>d&&(d.short||d.verse||d.apply||d.draft));
+  entries.sort((a,b)=>(b.selected?1:0)-(a.selected?1:0));
+  entries.forEach((d,i)=>{
     if(!d||!(d.short||d.verse||d.apply||d.draft))return;
-    lines.push(`해설 초안 ${i+1}`);
+    lines.push(`${d.selected?'선택한 ':''}해설 초안 ${i+1}`);
     if(d.short)lines.push('- 짧은 답: '+d.short);
     if(d.verse)lines.push('- 근거 성구: '+d.verse);
     if(d.apply)lines.push('- 적용점: '+d.apply);
