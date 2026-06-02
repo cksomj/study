@@ -61,11 +61,13 @@ async function extractPage(target) {
   if (!res.ok) throw new Error("JW.org 요청 실패: " + res.status);
 
   let html = await res.text();
+  html = isolateReadableHtml(html);
 
   html = html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<svg[\s\S]*?<\/svg>/gi, "");
+    .replace(/<svg[\s\S]*?<\/svg>/gi, "")
+    .replace(/<div[^>]+class=["'][^"']*(?:jsAudioPlayer|noJShide|jsPinnedAudioPlayer)[^"']*["'][\s\S]*?<\/div>/gi, "");
 
   const title = clean(
     firstMatch(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i) ||
@@ -91,7 +93,7 @@ async function extractPage(target) {
     let text = clean(m[2] || "");
     if (!href) continue;
     if (href.startsWith("/")) href = "https://www.jw.org" + href;
-    if (!href.startsWith("https://www.jw.org/ko/")) continue;
+    if (!isAllowedInternalLink(href)) continue;
     if (href.includes("#")) href = href.split("#")[0];
     if (!text) text = href;
     links.push({ text, url: href, type: classifyUrl(href, text) });
@@ -113,7 +115,29 @@ async function extractPage(target) {
 }
 
 function isUsefulStudyLink(url) {
-  return /\/라이브러리\/|\/성경\/|\/성경-공부\/|\/성경의-가르침\/|\/성경-질문\//.test(url);
+  const value = decodeUrlForMatch(url);
+  return /\/라이브러리\/|\/성경\/|\/성경-공부\/|\/성경의-가르침\/|\/성경-질문\/|\/open\?/.test(value);
+}
+
+function isolateReadableHtml(html) {
+  let source = html;
+  const article = source.match(/<article\b[\s\S]*?<\/article>/i);
+  if (article) source = article[0];
+
+  const downloadIndex = source.search(/다운로드 옵션|downloadOptions|pubMediaDownload/);
+  if (downloadIndex > 0) source = source.slice(0, downloadIndex);
+
+  source = source
+    .replace(/<header[^>]*class=["'][^"']*siteHeader[\s\S]*?<\/header>/gi, "")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+    .replace(/<aside[\s\S]*?<\/aside>/gi, "")
+    .replace(/<footer[\s\S]*?<\/footer>/gi, "");
+
+  return source;
+}
+
+function isAllowedInternalLink(href) {
+  return href.startsWith("https://www.jw.org/ko/") || href.startsWith("https://www.jw.org/open?");
 }
 
 function classifyLink(link) {
@@ -121,13 +145,21 @@ function classifyLink(link) {
 }
 
 function classifyUrl(url, text = "") {
-  const value = `${url} ${text}`;
+  const value = `${decodeUrlForMatch(url)} ${text}`;
   if (/\/성경\/|^[가-힣]{1,6}\s?\d{1,3}:\d{1,3}/.test(value)) return "성구";
   if (/동영상|\/미디어|\/동영상\//.test(value)) return "동영상";
   if (/노래|음악|오디오/.test(value)) return "노래/오디오";
   if (/읽가|랑제|훈|예레|파\d|파수대|깨어라/.test(value)) return "참조 출판물";
   if (/집회-교재|생활과-봉사/.test(value)) return "집회 교재";
   return "JW.org 자료";
+}
+
+function decodeUrlForMatch(url) {
+  try {
+    return decodeURIComponent(url);
+  } catch {
+    return String(url || "");
+  }
 }
 
 function firstMatch(s, re) {
