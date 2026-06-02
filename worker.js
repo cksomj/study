@@ -3,6 +3,7 @@ export default {
     const url = new URL(request.url);
     const target = url.searchParams.get("url");
     const deep = url.searchParams.get("deep") === "1";
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 80), 1), 120);
 
     const cors = {
       "Access-Control-Allow-Origin": "*",
@@ -21,7 +22,7 @@ export default {
       const main = await extractPage(target);
 
       if (deep) {
-        const limited = main.related.slice(0, 8);
+        const limited = main.related.slice(0, limit);
         const relatedPages = [];
         for (const link of limited) {
           try {
@@ -29,8 +30,10 @@ export default {
             relatedPages.push({
               url: page.url,
               title: page.title,
-              blocks: page.blocks.slice(0, 20),
-              verses: page.verses.slice(0, 20)
+              sourceText: link.text || "",
+              blocks: page.blocks,
+              verses: page.verses,
+              relatedCount: page.related.length
             });
           } catch (e) {
             relatedPages.push({ url: link.url, title: link.text || link.url, error: String(e.message || e) });
@@ -98,14 +101,18 @@ async function extractPage(target) {
     if (seen.has(l.url)) return false;
     seen.add(l.url);
     if (l.url === target) return false;
-    return /\/라이브러리\/|\/성경\//.test(l.url);
-  }).slice(0, 40);
+    return isUsefulStudyLink(l.url);
+  });
 
   const verses = Array.from(new Set(
     blocks.flatMap(b => Array.from(b.text.matchAll(/[가-힣]{1,6}\s?\d{1,3}:\d{1,3}(?:-\d{1,3})?/g)).map(x => x[0]))
   )).slice(0, 80);
 
   return { url: target, title, blocks, verses, related };
+}
+
+function isUsefulStudyLink(url) {
+  return /\/라이브러리\/|\/성경\/|\/성경-공부\/|\/성경의-가르침\/|\/성경-질문\//.test(url);
 }
 
 function firstMatch(s, re) {
@@ -130,3 +137,4 @@ function decodeHtml(s) {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
 }
+
