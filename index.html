@@ -70,6 +70,10 @@ details{background:white;border:1px solid var(--line);border-radius:12px;padding
         <div id="savedList" class="linkList"></div>
       </section>
       <section class="panel">
+        <h2>저장된 리포트</h2>
+        <div id="reportList" class="linkList"></div>
+      </section>
+      <section class="panel">
         <h2>나의 메모</h2>
         <textarea id="memo" placeholder="해설 후보, 적용점, 질문 답을 적어 두세요."></textarea>
         <button id="saveMemo" class="secondary" style="margin-top:10px">메모 저장</button>
@@ -141,6 +145,7 @@ async function fetchFromWorker(url, deep=true){
   currentData=data;
   renderData(data);
   renderSaved();
+  renderReportList();
   hideStatus();
 }
 
@@ -357,6 +362,7 @@ saveReportBtn.onclick=()=>{
   if(!currentData||!currentUrl){showStatus('먼저 자료를 가져오세요.');return}
   const record={savedAt:new Date().toISOString(),url:currentUrl,title:currentData.title||'',report:buildPlainReport(currentData),memo:memo.value};
   localStorage.setItem(reportKey(currentUrl),JSON.stringify(record));
+  renderReportList();
   showStatus('예습 리포트와 메모를 이 브라우저에 저장했습니다.');
 }
 saveMemo.onclick=()=>{if(!currentUrl){showStatus('먼저 자료를 가져오세요.');return}localStorage.setItem(memoKey(currentUrl),memo.value);memoState.textContent='메모가 저장되었습니다.'}
@@ -366,6 +372,58 @@ function renderSaved(){
   savedList.innerHTML=items.map(x=>`<a href="#" onclick="loadSaved('${encodeURIComponent(x.url)}');return false;"><b>${escapeHtml(x.title)}</b><br><span class="small muted">${escapeHtml(x.url)}</span></a>`).join('')||'<p class="muted">아직 저장된 자료가 없습니다.</p>';
 }
 window.loadSaved=encoded=>{const url=decodeURIComponent(encoded);const raw=localStorage.getItem(key(url));if(raw){currentUrl=url;renderData(JSON.parse(raw))}}
+function renderReportList(){
+  const items=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('jw-study-report:')){
+      try{
+        const record=JSON.parse(localStorage.getItem(k));
+        items.push({key:k,url:k.replace('jw-study-report:',''),...record});
+      }catch(e){}
+    }
+  }
+  items.sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||'')));
+  reportList.innerHTML=items.map(item=>`
+    <div class="card">
+      <b>${escapeHtml(item.title||'예습 리포트')}</b>
+      <p class="small muted">${escapeHtml(formatSavedAt(item.savedAt))}<br>${escapeHtml(item.url||'')}</p>
+      <button class="ghost" onclick="loadSavedReport('${encodeURIComponent(item.url)}')">리포트 보기</button>
+      <button class="ghost" onclick="copySavedReport('${encodeURIComponent(item.url)}')">복사</button>
+      <button class="ghost" onclick="deleteSavedReport('${encodeURIComponent(item.url)}')">삭제</button>
+    </div>`).join('')||'<p class="muted">저장된 리포트가 없습니다.</p>';
+}
+window.loadSavedReport=encoded=>{
+  const url=decodeURIComponent(encoded);
+  const raw=localStorage.getItem(reportKey(url));
+  if(!raw){showStatus('저장된 리포트를 찾지 못했습니다.');return}
+  const record=JSON.parse(raw);
+  report.innerHTML=`<pre>${escapeHtml(record.report||'')}</pre>`;
+  memo.value=record.memo||'';
+  currentUrl=url;
+  memoState.textContent='저장된 리포트 기준: '+url;
+  showStatus('저장된 리포트를 불러왔습니다.');
+}
+window.copySavedReport=async encoded=>{
+  const url=decodeURIComponent(encoded);
+  const raw=localStorage.getItem(reportKey(url));
+  if(!raw){showStatus('저장된 리포트를 찾지 못했습니다.');return}
+  const record=JSON.parse(raw);
+  try{
+    await copyText(record.report||'');
+    showStatus('저장된 리포트를 복사했습니다.');
+  }catch(e){showStatus(e.message)}
+}
+window.deleteSavedReport=encoded=>{
+  const url=decodeURIComponent(encoded);
+  localStorage.removeItem(reportKey(url));
+  renderReportList();
+  showStatus('저장된 리포트를 삭제했습니다.');
+}
+function formatSavedAt(value){
+  if(!value)return '';
+  try{return new Date(value).toLocaleString('ko-KR')}catch{return value}
+}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escapeAttr(s){return escapeHtml(s).replace(/`/g,'&#096;')}
 function groupBy(items,fn){return items.reduce((map,item)=>{const key=fn(item);(map[key]||(map[key]=[])).push(item);return map},{})}
@@ -413,6 +471,7 @@ function plainSection(title, blocks, relatedPages, keywords, questions=[]){
   return `\n[${title}]\n주요점\n${points}${answers?'\n\n질문별 답 후보\n'+answers:''}\n\n후보 자료\n${candidates}\n`;
 }
 renderSaved();
+renderReportList();
 </script>
 </body>
 </html>
