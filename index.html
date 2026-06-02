@@ -18,7 +18,7 @@ button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;
 .warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
-.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft summary{font-weight:900}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
 @media(max-width:820px){.grid,.two,.draft-grid{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}.app{padding:12px}h1{font-size:26px}.hero,.panel{border-radius:14px;padding:14px}.report-card{padding:13px}.tabs button{flex:1 1 46%;min-height:42px}}
 </style>
@@ -279,15 +279,15 @@ function questionAnswerCards(questions,pages,sectionText){
   }).join('');
 }
 function draftForm(id){
-  return `<div class="answer-draft">
-    <h4>내 해설 준비</h4>
+  return `<details class="answer-draft" data-draft-panel="${escapeAttr(id)}">
+    <summary>내 해설 준비</summary>
     <div class="draft-grid">
       <div><label>짧은 답</label><input data-draft="${escapeAttr(id)}" data-field="short" placeholder="한두 문장으로 답하기"></div>
       <div><label>근거 성구</label><input data-draft="${escapeAttr(id)}" data-field="verse" placeholder="예: 렘 2:28"></div>
     </div>
     <label>적용점</label><input data-draft="${escapeAttr(id)}" data-field="apply" placeholder="나에게, 봉사에, 회중에 어떻게 적용할지">
     <label>내 해설 초안</label><textarea data-draft="${escapeAttr(id)}" data-field="draft" placeholder="집회에서 할 해설 초안을 적어 두세요."></textarea>
-  </div>`;
+  </details>`;
 }
 function candidatePages(label,pages,openCount=1){
   if(!pages.length)return `<h4>${escapeHtml(label)}</h4><p class="muted">가져온 링크 내용에서 뚜렷한 후보를 찾지 못했습니다. 링크 전체 탭에서 직접 확인해 보세요.</p>`;
@@ -538,6 +538,7 @@ function formatSavedAt(value){
 }
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escapeAttr(s){return escapeHtml(s).replace(/`/g,'&#096;')}
+function cssEscape(s){return String(s||'').replace(/["\\]/g,'\\$&')}
 function groupBy(items,fn){return items.reduce((map,item)=>{const key=fn(item);(map[key]||(map[key]=[])).push(item);return map},{})}
 function draftId(question){
   let hash=0;
@@ -561,6 +562,7 @@ function hydrateDraftInputs(){
     if(field==='selected'){
       input.checked=!!drafts[id]?.selected;
       input.closest('.question-card')?.classList.toggle('selected',input.checked);
+      if(input.checked)openDraftPanel(id);
     }else{
       input.value=drafts[id]?.[field]||'';
     }
@@ -568,13 +570,20 @@ function hydrateDraftInputs(){
       const next=readDrafts();
       next[id]={...(next[id]||{}),[field]:field==='selected'?input.checked:input.value};
       writeDrafts(next);
-      if(field==='selected')input.closest('.question-card')?.classList.toggle('selected',input.checked);
+      if(field==='selected'){
+        input.closest('.question-card')?.classList.toggle('selected',input.checked);
+        if(input.checked)openDraftPanel(id);
+      }
       renderSelectedSummary();
     };
     input.oninput=save;
     input.onchange=save;
   });
   renderSelectedSummary();
+}
+function openDraftPanel(id){
+  const panel=report.querySelector(`[data-draft-panel="${cssEscape(id)}"]`);
+  if(panel)panel.open=true;
 }
 function renderSelectedSummary(){
   const box=$('selectedDraftSummary');
