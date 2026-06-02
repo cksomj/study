@@ -107,6 +107,7 @@ details{background:white;border:1px solid var(--line);border-radius:12px;padding
 </div>
 
 <script>
+(()=>{
 const $=id=>document.getElementById(id);
 let currentUrl='';
 let currentData=null;
@@ -496,6 +497,7 @@ function plainSection(title, blocks, relatedPages, keywords, questions=[]){
 }
 renderSaved();
 renderReportList();
+})();
 </script>
 </body>
 </html>
