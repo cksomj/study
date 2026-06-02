@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JW 생활과 봉사 예습 앱</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fffdf8;--ink:#263238;--muted:#64706a;--line:#e4ded2;--brand:#5b7f71;--accent:#b77b4b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.app{max-width:1100px;margin:auto;padding:18px}.hero,.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin:14px 0;box-shadow:0 12px 28px #00000012}
+.hero{background:linear-gradient(135deg,#fffdf8,#eaf3ef)}h1{margin:0 0 8px;font-size:34px}h2{margin:0 0 12px}.muted{color:var(--muted);line-height:1.65}
+.row{display:flex;gap:10px;align-items:center}.row input{flex:1}.row.wrap{flex-wrap:wrap}input,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px;font-size:16px;background:white}
+button,a.btn{border:0;border-radius:14px;background:var(--brand);color:#fff;padding:13px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}button.secondary{background:var(--accent)}button.ghost{background:white;color:var(--brand);border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:16px}.small{font-size:13px}.tag{display:inline-block;background:#e8f0ec;color:#2f5e50;border-radius:999px;padding:7px 10px;margin:4px;font-weight:800;font-size:13px}
+.content p{line-height:1.85}.content h1,.content h2,.content h3{margin-top:24px}.linkList a{display:block;background:white;border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;color:var(--ink);text-decoration:none}.warn{background:#fff7ea;border:1px solid #ead7bb;border-radius:16px;padding:12px;color:#744f29}
+pre{white-space:pre-wrap;background:#1f2937;color:#e5e7eb;border-radius:16px;padding:14px;overflow:auto}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <p class="tag">생활과 봉사 예습 노트</p>
+    <h1>JW.org 주간 자료 가져오기</h1>
+    <p class="muted">주간 교재 URL을 넣고 버튼을 누르면, Cloudflare Worker가 해당 주간 페이지와 관련 JW.org 자료 링크를 읽어 개인 예습 화면으로 정리합니다.</p>
+  </section>
+
+  <section class="panel">
+    <h2>1. Worker 주소 설정</h2>
+    <p class="muted">Cloudflare Worker 배포 후 아래에 Worker 주소를 넣으세요. 예: https://jw-study-fetcher.내계정.workers.dev</p>
+    <input id="workerUrl" placeholder="Cloudflare Worker 주소">
+    <p class="small muted">이 값은 이 브라우저에만 저장됩니다.</p>
+  </section>
+
+  <section class="panel">
+    <h2>2. 주간 교재 URL</h2>
+    <div class="row">
+      <input id="pageUrl" placeholder="JW.org 주간 교재 URL을 붙여넣으세요">
+      <button id="fetchBtn">이번 주 전체 자료 가져오기</button>
+    </div>
+    <div class="row wrap" style="margin-top:10px">
+      <button class="ghost" data-sample="https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-9월-10월-집회-교재/생활과-봉사-집회-계획표-2026년-9월-7-13일/">9월 7-13일 예시</button>
+      <button class="ghost" data-sample="https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-9월-10월-집회-교재/생활과-봉사-집회-계획표-2026년-10월-12-18일/">10월 12-18일 예시</button>
+    </div>
+    <p id="status" class="warn" style="display:none"></p>
+  </section>
+
+  <section class="grid">
+    <div class="panel">
+      <h2>가져온 자료 목록</h2>
+      <div id="savedList" class="linkList"></div>
+    </div>
+    <div class="panel">
+      <h2>나의 메모</h2>
+      <textarea id="memo" placeholder="예습 메모를 적으세요. 선택한 자료 URL 기준으로 저장됩니다."></textarea>
+      <button id="saveMemo" class="secondary" style="margin-top:10px">메모 저장</button>
+      <p id="memoState" class="small muted"></p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="resultTitle">자료 내용</h2>
+    <p class="muted" id="sourceUrl"></p>
+    <div id="verses"></div>
+    <div id="content" class="content"></div>
+  </section>
+
+  <section class="panel">
+    <h2>관련 JW.org 자료</h2>
+    <p class="muted">주간 페이지 안에서 발견된 JW.org 내부 자료 링크입니다. “관련 자료 가져오기”를 누르면 해당 링크들도 요약 추출합니다.</p>
+    <div id="related" class="linkList"></div>
+  </section>
+
+  <section class="panel">
+    <h2>주의</h2>
+    <p class="muted">이 앱은 개인 예습용입니다. 가져온 본문을 공개 저장소나 웹사이트에 다시 게시하지 마세요. 자료의 공식 출처와 최신 내용은 항상 JW.org 원문을 기준으로 확인하세요.</p>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let currentUrl='';
+workerUrl.value=localStorage.getItem('jwWorkerUrl')||'';
+pageUrl.value=localStorage.getItem('lastJwPageUrl')||'';
+workerUrl.onchange=()=>localStorage.setItem('jwWorkerUrl',workerUrl.value.trim());
+document.querySelectorAll('[data-sample]').forEach(b=>b.onclick=()=>pageUrl.value=b.dataset.sample);
+
+function showStatus(msg){status.style.display='block';status.textContent=msg}
+function hideStatus(){status.style.display='none'}
+function key(url){return 'jw-study-cache:'+url}
+function memoKey(url){return 'jw-study-memo:'+url}
+
+async function fetchFromWorker(url, deep=false){
+  const w=workerUrl.value.trim().replace(/\/$/,'');
+  if(!w){showStatus('먼저 Cloudflare Worker 주소를 입력하세요.');return}
+  if(!url){showStatus('JW.org 주간 교재 URL을 입력하세요.');return}
+  localStorage.setItem('jwWorkerUrl',w);
+  localStorage.setItem('lastJwPageUrl',url);
+  showStatus('자료를 가져오는 중입니다...');
+  const api=w+'/?url='+encodeURIComponent(url)+'&deep='+(deep?'1':'0');
+  const res=await fetch(api);
+  if(!res.ok) throw new Error('Worker 응답 오류: '+res.status);
+  const data=await res.json();
+  localStorage.setItem(key(url),JSON.stringify(data));
+  currentUrl=url;
+  renderData(data);
+  renderSaved();
+  hideStatus();
+}
+
+function renderData(data){
+  currentUrl=data.url||currentUrl;
+  resultTitle.textContent=data.title||'자료 내용';
+  sourceUrl.innerHTML=data.url?`원문: <a href="${data.url}" target="_blank" rel="noreferrer">${data.url}</a>`:'';
+  verses.innerHTML=(data.verses||[]).map(v=>`<span class="tag">${v}</span>`).join('');
+  content.innerHTML=(data.blocks||[]).map(b=>{
+    if(b.type==='h1'||b.type==='h2'||b.type==='h3') return `<${b.type}>${escapeHtml(b.text)}</${b.type}>`;
+    return `<p>${escapeHtml(b.text)}</p>`;
+  }).join('')||'<p class="muted">표시할 본문이 없습니다.</p>';
+  related.innerHTML=(data.related||[]).map(l=>`
+    <div class="card">
+      <b>${escapeHtml(l.text||l.url)}</b>
+      <p class="small muted">${escapeHtml(l.url)}</p>
+      <button class="ghost" onclick="fetchRelated('${encodeURIComponent(l.url)}')">관련 자료 가져오기</button>
+      <a class="btn" target="_blank" rel="noreferrer" href="${l.url}">원문 열기</a>
+    </div>`).join('')||'<p class="muted">관련 링크가 없습니다.</p>';
+  memo.value=localStorage.getItem(memoKey(currentUrl))||'';
+  memoState.textContent=currentUrl?'메모 저장 기준: '+currentUrl:'';
+}
+
+window.fetchRelated=async encoded=>{
+  const url=decodeURIComponent(encoded);
+  await fetchFromWorker(url,false);
+}
+
+fetchBtn.onclick=async()=>{
+  try{await fetchFromWorker(pageUrl.value.trim(),true)}
+  catch(e){showStatus(e.message)}
+}
+saveMemo.onclick=()=>{
+  if(!currentUrl){showStatus('먼저 자료를 가져오세요.');return}
+  localStorage.setItem(memoKey(currentUrl),memo.value);
+  memoState.textContent='메모가 저장되었습니다.';
+}
+
+function renderSaved(){
+  const items=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('jw-study-cache:')){
+      try{const d=JSON.parse(localStorage.getItem(k));items.push({url:k.replace('jw-study-cache:',''),title:d.title||k})}catch(e){}
+    }
+  }
+  savedList.innerHTML=items.map(x=>`<a href="#" onclick="loadSaved('${encodeURIComponent(x.url)}');return false;"><b>${escapeHtml(x.title)}</b><br><span class="small muted">${escapeHtml(x.url)}</span></a>`).join('')||'<p class="muted">아직 저장된 자료가 없습니다.</p>';
+}
+window.loadSaved=encoded=>{
+  const url=decodeURIComponent(encoded);
+  const raw=localStorage.getItem(key(url));
+  if(raw){currentUrl=url;renderData(JSON.parse(raw))}
+}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+renderSaved();
+</script>
+</body>
+</html>
