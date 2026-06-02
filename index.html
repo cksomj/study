@@ -272,7 +272,7 @@ function questionAnswerCards(questions,pages,sectionText){
           ${pointList(c.snippets.slice(0,4))}
         </details>`).join('')
       : '<p class="muted">가져온 링크 내용에서 직접적인 답 후보를 찾지 못했습니다.</p>';
-    return `<div class="card question-card" data-question-id="${escapeAttr(id)}">
+    return `<div class="card question-card" data-question-id="${escapeAttr(id)}" data-question="${escapeAttr(q)}">
       <label class="pick-row"><input type="checkbox" data-draft="${escapeAttr(id)}" data-field="selected" value="1"> 이 질문으로 해설 준비</label>
       <b>${escapeHtml(q)}</b>${body}${draftForm(id)}
     </div>`;
@@ -568,7 +568,8 @@ function hydrateDraftInputs(){
     }
     const save=()=>{
       const next=readDrafts();
-      next[id]={...(next[id]||{}),[field]:field==='selected'?input.checked:input.value};
+      const question=input.closest('.question-card')?.dataset.question||'';
+      next[id]={...(next[id]||{}),question,[field]:field==='selected'?input.checked:input.value};
       writeDrafts(next);
       if(field==='selected'){
         input.closest('.question-card')?.classList.toggle('selected',input.checked);
@@ -596,7 +597,7 @@ function renderSelectedSummary(){
   }
   box.innerHTML='<h3>선택한 해설</h3>'+selected.map((d,i)=>`
     <div class="summary-item">
-      <b>${escapeHtml(d.short||d.draft||'해설 초안 '+(i+1))}</b>
+      <b>${escapeHtml(d.short||d.draft||d.question||'해설 초안 '+(i+1))}</b>
       ${d.verse?`<p class="small"><span class="tag">${escapeHtml(d.verse)}</span></p>`:''}
       ${d.apply?`<p>${escapeHtml(d.apply)}</p>`:''}
       ${d.draft?`<p class="muted">${escapeHtml(d.draft)}</p>`:''}
