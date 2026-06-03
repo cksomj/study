@@ -269,7 +269,7 @@ async function buildDataFromPdf(file){
     const lines=content.items.map(item=>item.str||'').join(' ').replace(/\s+/g,' ').trim();
     if(lines)blocks.push({type:'p',text:`${pageNum}쪽. ${lines}`});
   }
-  return {url:'file:'+file.name,title:file.name,blocks,verses:extractVersesFromBlocks(blocks),related:[],relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+  return {url:'file:'+file.name,title:file.name,blocks,verses:extractVersesFromBlocks(blocks),related:extractJwLinksFromText(textOf(blocks)),relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
 }
 async function loadPdfJs(){
   if(window.pdfjsLib)return window.pdfjsLib;
@@ -315,7 +315,19 @@ function buildDataFromText(name,text,isHtml=false){
       links.push({url:href,text:cleanPoint((m[2]||'').replace(/<[^>]+>/g,' '))||href,type:'JW.org 자료'});
     }
   }
-  return {url:'file:'+name,title:name,blocks,verses:[],related:links,relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+  return {url:'file:'+name,title:name,blocks,verses:extractVersesFromBlocks(blocks),related:uniqueLinks([...links,...extractJwLinksFromText(text)]),relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+}
+function extractJwLinksFromText(text){
+  return Array.from(String(text||'').matchAll(/https:\/\/www\.jw\.org\/ko\/[^\s"'<>]+/g))
+    .map(match=>({url:match[0].replace(/[),.]+$/,''),text:match[0].replace(/[),.]+$/,''),type:'JW.org 자료'}));
+}
+function uniqueLinks(links){
+  const seen=new Set();
+  return (links||[]).filter(link=>{
+    if(!link?.url||seen.has(link.url))return false;
+    seen.add(link.url);
+    return true;
+  });
 }
 function saveCurrentExtraStudy(){
   if(!currentData){showStatus('저장할 추가 연구 자료가 없습니다.');return}
@@ -452,6 +464,7 @@ function buildGenericReport(data){
     ${reportCard('주요 내용 리포트', '본문의 핵심 흐름과 해설에 사용할 만한 주요점을 정리합니다.', [
       guidanceList(['먼저 본문의 흐름을 확인하고, 해설에 쓸 한두 문장 요점을 고릅니다.','관련 링크가 있으면 원문을 열어 근거가 되는 문장을 확인합니다.']),
       genericStudyReport(blocks),
+      relatedFetchBox(data),
       candidatePages('관련 자료 후보', findCandidates(relatedPages,textOf(blocks),keywords), 0)
     ])}
     ${reportCard('해설 준비 질문', '본문에서 찾은 질문이나 직접 생각해 볼 질문을 중심으로 해설 후보를 준비합니다.', [
@@ -459,6 +472,16 @@ function buildGenericReport(data){
       genericQuestionPrepCards(questions, blocks, relatedPages)
     ])}
   `;
+}
+function relatedFetchBox(data){
+  const count=(data.related||[]).length;
+  const fetched=(data.relatedPages||[]).length;
+  if(!count)return '<div class="prep-box"><h4>관련 링크</h4><p class="muted">본문에서 JW.org 링크를 찾지 못했습니다.</p></div>';
+  return `<div class="prep-box"><h4>관련 링크</h4>
+    <p class="muted">본문에서 JW.org 링크 ${count}개를 찾았습니다. 링크 내용까지 가져오면 해설 후보가 더 좋아집니다.</p>
+    <button class="ghost" onclick="fetchCurrentRelatedPages()">관련 링크 내용 가져오기</button>
+    ${fetched?`<p class="small muted">가져온 링크 내용: ${fetched}개</p>`:''}
+  </div>`;
 }
 function genericStudyQuestions(blocks){
   return uniqueTexts([
@@ -905,6 +928,27 @@ function highlightTerms(text,words){
 function escapeRegExp(text){return String(text).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
 
 window.fetchRelated=async encoded=>{await fetchFromWorker(decodeURIComponent(encoded),false)}
+window.fetchCurrentRelatedPages=async()=>{
+  if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
+  const links=(currentData.related||[]).slice(0,30);
+  if(!links.length){showStatus('가져올 관련 링크가 없습니다.');return}
+  const w=workerUrl.value.trim().replace(/\/$/,'');
+  showStatus('관련 링크 내용을 가져오는 중입니다...');
+  const pages=[];
+  for(const link of links){
+    try{
+      const res=await fetch(w+'/?url='+encodeURIComponent(link.url)+'&deep=0');
+      const page=await res.json();
+      if(!res.ok||page.error)throw new Error(page.error||('Worker 응답 오류: '+res.status));
+      pages.push({url:page.url,title:page.title,sourceText:link.text||'',sourceType:link.type||'JW.org 자료',blocks:page.blocks||[],verses:page.verses||[],relatedCount:(page.related||[]).length});
+    }catch(e){
+      pages.push({url:link.url,title:link.text||link.url,error:String(e.message||e)});
+    }
+  }
+  currentData.relatedPages=pages;
+  renderData(currentData);
+  showStatus('관련 링크 내용을 가져왔습니다.');
+}
 fetchBtn.onclick=async()=>{try{await fetchFromWorker(pageUrl.value.trim(),true)}catch(e){showStatus(e.message)}}
 window.__studyFetch=async()=>fetchBtn.onclick();
 if(checkWorkerBtn)checkWorkerBtn.onclick=async()=>{
