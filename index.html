@@ -29,29 +29,13 @@ p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.lin
 <div class="app">
   <section class="hero">
     <p class="tag">생활과 봉사 예습 리포트</p>
-    <h1>JW.org 자료를 읽고 해설 후보 찾기</h1>
-    <p class="muted">주간 교재 본문을 먼저 보여 주고, 그 안의 JW.org 링크를 가져와서 프로그램별로 핵심 내용과 질문 답변 후보를 정리합니다.</p>
+    <h1>생활과 봉사 예습 앱</h1>
   </section>
 
-  <section class="panel">
-    <h2>1. Worker 주소 설정</h2>
-    <p class="muted">JW.org 페이지는 브라우저에서 직접 읽기 어려워 Cloudflare Worker가 대신 가져옵니다.</p>
-    <input id="workerUrl" placeholder="Cloudflare Worker 주소">
-    <p class="small muted">이 값은 이 브라우저에만 저장됩니다. Worker가 아직 없다면 GitHub 저장소의 <b>worker.js</b>를 Cloudflare Worker에 배포해야 합니다.</p>
-    <div class="row" style="margin-top:10px">
-      <button id="checkWorkerBtn" class="ghost">Worker 연결 확인</button>
-      <button id="copyWorkerCodeBtn" class="ghost">Worker 코드 복사</button>
-      <button id="copyWranglerBtn" class="ghost">배포 명령 복사</button>
-    </div>
-    <details style="margin-top:10px">
-      <summary>Worker를 만드는 방법</summary>
-      <p class="muted">Cloudflare Workers에서 새 Worker를 만들고, <b>Worker 코드 복사</b>를 누른 뒤 편집기에 붙여넣어 배포하세요. 배포 주소를 이 칸에 넣고 <b>Worker 연결 확인</b>을 누르면 됩니다.</p>
-      <p class="small muted">Wrangler를 쓰는 경우: <code>npx wrangler deploy</code></p>
-    </details>
-  </section>
+  <input id="workerUrl" type="hidden">
 
   <section class="panel">
-    <h2>2. 주간 교재 URL</h2>
+    <h2>1. 주간 교재 URL</h2>
     <div class="row">
       <input id="pageUrl" placeholder="JW.org 생활과 봉사 주간 교재 URL">
       <button id="fetchBtn">본문과 링크 자료 가져오기</button>
@@ -633,7 +617,7 @@ function escapeRegExp(text){return String(text).replace(/[.*+?^${}()|[\]\\]/g,'\
 window.fetchRelated=async encoded=>{await fetchFromWorker(decodeURIComponent(encoded),false)}
 fetchBtn.onclick=async()=>{try{await fetchFromWorker(pageUrl.value.trim(),true)}catch(e){showStatus(e.message)}}
 window.__studyFetch=async()=>fetchBtn.onclick();
-checkWorkerBtn.onclick=async()=>{
+if(checkWorkerBtn)checkWorkerBtn.onclick=async()=>{
   try{
     const w=workerUrl.value.trim().replace(/\/$/,'');
     if(!w){showStatus('Worker 주소를 먼저 입력하세요.');return}
@@ -644,7 +628,7 @@ checkWorkerBtn.onclick=async()=>{
     showStatus('Worker 연결 성공: '+(data.title||'자료를 읽었습니다.'));
   }catch(e){showStatus('Worker 연결 실패: '+e.message)}
 }
-copyWorkerCodeBtn.onclick=async()=>{
+if(copyWorkerCodeBtn)copyWorkerCodeBtn.onclick=async()=>{
   try{
     showStatus('Worker 코드를 가져오는 중입니다...');
     const res=await fetch('./worker.js?v='+Date.now());
@@ -653,7 +637,7 @@ copyWorkerCodeBtn.onclick=async()=>{
     showStatus('Worker 코드를 복사했습니다. Cloudflare Worker 편집기에 붙여넣으세요.');
   }catch(e){showStatus('Worker 코드 복사 실패: '+e.message)}
 }
-copyWranglerBtn.onclick=async()=>{
+if(copyWranglerBtn)copyWranglerBtn.onclick=async()=>{
   const command='npx wrangler deploy --name jw-study-fetcher';
   await copyText(command);
   showStatus('배포 명령을 복사했습니다: '+command);
