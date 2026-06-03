@@ -147,6 +147,7 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
           <div class="row" style="margin-top:6px">
             <input id="searchInput" placeholder="예: 여호와 사랑, 용기, 가정, 봉사, 렘 2:28">
             <button id="searchBtn" class="secondary">JW.org 검색</button>
+            <button id="analyzeSearchBtn" class="ghost">검색 자료 분석</button>
             <button id="localSearchBtn" class="ghost">현재 자료 안에서 찾기</button>
           </div>
           <div id="relatedTerms" class="small muted" style="margin-top:8px"></div>
@@ -231,6 +232,7 @@ const sourceUrl=$('sourceUrl');
 const verses=$('verses');
 const searchInput=$('searchInput');
 const searchBtn=$('searchBtn');
+const analyzeSearchBtn=$('analyzeSearchBtn');
 const localSearchBtn=$('localSearchBtn');
 const relatedTerms=$('relatedTerms');
 const searchResults=$('searchResults');
@@ -252,6 +254,7 @@ versionResetBtn.onclick=()=>resetForNewVersion();
 sampleBtn.onclick=()=>pageUrl.value=sampleUrl;
 weeklyBtn.onclick=()=>fetchWeeklyMeeting(true);
 searchBtn.onclick=()=>searchJwOrg();
+analyzeSearchBtn.onclick=()=>analyzeSearchMaterials();
 localSearchBtn.onclick=()=>renderLocalSearchResults();
 searchInput.onkeydown=e=>{if(e.key==='Enter')searchJwOrg()};
 searchInput.oninput=()=>renderRelatedTerms();
@@ -1201,6 +1204,42 @@ function renderJwSearchResults(data,pages){
         ${page.error?`<p class="warn">${escapeHtml(page.error)}</p>`:pointList(topPoints(page.blocks||[],4))}
         ${page.url?`<a class="btn ghost" href="${escapeAttr(page.url)}" target="_blank" rel="noreferrer">원문 열기</a>`:''}
       </div>`).join('')}`;
+}
+function searchMaterialPages(){
+  return uniquePages((currentData?.relatedPages||[]).filter(page=>!page.error&&(page.sourceType==='JW.org 검색'||page.searchQuery)));
+}
+function analyzeSearchMaterials(){
+  if(!currentData){searchResults.innerHTML='<p class="small muted">먼저 JW.org 검색으로 자료를 가져오세요.</p>';return}
+  const pages=searchMaterialPages();
+  if(!pages.length){
+    searchResults.innerHTML='<p class="small muted">분석할 JW.org 검색 자료가 아직 없습니다. 먼저 JW.org 검색을 실행하세요.</p>';
+    return;
+  }
+  const html=buildSearchAnalysisReport(pages);
+  searchResults.innerHTML=html;
+  report.innerHTML=html+buildReport(currentData);
+  hydrateDraftInputs();
+  showStatus('검색된 JW.org 자료를 요점 리포트로 정리했습니다.');
+}
+function buildSearchAnalysisReport(pages){
+  const allBlocks=pages.flatMap(page=>(page.blocks||[]).map(block=>({type:block.type,text:block.text,source:page.title||page.sourceText||page.url,url:page.url})));
+  const overall=topPoints(allBlocks,10);
+  const questions=genericStudyQuestions(allBlocks);
+  const keywords=importantWords(textOf(allBlocks)).slice(0,10);
+  return `<section class="source-body search-analysis-report">
+    <h3>검색 자료 요점 리포트</h3>
+    <p class="small muted">JW.org 검색으로 가져온 자료 ${pages.length}개를 바탕으로 정리했습니다.</p>
+    <div class="prep-box"><h4>전체 주요점</h4>${pointList(overall)}</div>
+    <div class="prep-box"><h4>관련 핵심어</h4><p>${keywords.map(word=>`<span class="tag">${escapeHtml(word)}</span>`).join('')||'<span class="muted">핵심어 없음</span>'}</p></div>
+    <div class="prep-box"><h4>해설 준비에 사용할 질문</h4>${questionList(questions.slice(0,6))}</div>
+    <h4>자료별 요점</h4>
+    ${pages.map(page=>`
+      <details class="candidate" open>
+        <summary>${escapeHtml(page.title||page.sourceText||page.url)}</summary>
+        <p class="small muted">${escapeHtml(page.searchQuery?('검색어: '+page.searchQuery):'')}<br><a href="${escapeAttr(page.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
+        ${pointList(topPoints(page.blocks||[],5))}
+      </details>`).join('')}
+  </section>`;
 }
 function renderLocalSearchResults(silent=false){
   if(!searchResults)return;
