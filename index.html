@@ -10,7 +10,7 @@
 .app{width:min(100%,1280px);margin:auto;padding:clamp(10px,2vw,22px)}.hero,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2vw,20px);margin:14px 0;box-shadow:0 10px 26px #00000010}
 .home-screen{min-height:calc(100vh - 44px);display:grid;place-items:center}.home-card{width:min(100%,780px);background:linear-gradient(145deg,#fffdf8,#edf4ef);border:1px solid var(--line);border-radius:26px;padding:clamp(24px,5vw,46px);box-shadow:0 24px 70px #25323820}.home-kicker{display:inline-block;background:var(--soft);color:var(--brand);border-radius:999px;padding:8px 12px;font-weight:900}.home-title{font-size:clamp(34px,8vw,64px);line-height:1;margin:18px 0 10px;letter-spacing:0}.home-pass{font-size:18px;font-weight:900;color:var(--accent);margin:0 0 28px}.home-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}.home-actions button{min-height:64px;font-size:18px}.home-reset{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}.workspace.hidden,.home-screen.hidden{display:none}.workspace-bar{display:flex;justify-content:space-between;align-items:center;gap:10px}.workspace-bar h2{margin:0}
 .hero{background:linear-gradient(135deg,#fffdf8,#e9f2ee)}h1{margin:0 0 8px;font-size:32px}h2{margin:0 0 12px;font-size:22px}h3{margin:18px 0 8px}
-.muted{color:var(--muted);line-height:1.65}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center}.row input{flex:1}
+.muted{color:var(--muted);line-height:1.65}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row input{flex:1 1 220px;min-width:0}
 input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px;background:white}textarea{min-height:150px}
 button,a.btn{border:0;border-radius:12px;background:var(--brand);color:#fff;padding:12px 14px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
 button:disabled{opacity:.62;cursor:wait}
@@ -23,7 +23,7 @@ button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
 .search-box{background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}.search-box .row{align-items:stretch}.search-result mark{background:#fff0a6;border-radius:4px;padding:0 2px}.search-result .card button{margin:4px 0 6px}.section{display:none}.section.on{display:block}.report-nav{display:flex;gap:8px;flex-wrap:wrap;background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:10px;margin:0 0 14px}.report-nav a{background:white;border:1px solid var(--line);border-radius:999px;color:var(--brand);font-weight:800;padding:8px 10px;text-decoration:none}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.question-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.question-tools button{padding:9px 10px}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft summary{font-weight:900}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
-p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.linkList{min-width:0}
+p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:anywhere;word-break:break-word}.report,#contentTab,#linksTab,#relatedTab,.linkList,.content-preview{min-width:0;max-width:100%}.panel,.card,details,.prep-box,.study-range,.question-card,.answer-draft{max-width:100%;overflow:hidden}pre{white-space:pre-wrap;margin:0;max-width:100%;font-family:inherit;line-height:1.7}img,video,iframe,table{max-width:100%}table{display:block;overflow-x:auto}.card button,.card a.btn,.linkList button{max-width:100%;white-space:normal;margin:4px 4px 4px 0}.report-actions{flex-wrap:wrap}.tabs button,.mode-tabs button{min-width:0;white-space:normal}
 @media(max-width:980px){.grid,.two,.draft-grid{grid-template-columns:1fr}.grid main{order:1}.grid aside{order:2}.row{display:block}.row button{width:100%;margin-top:8px}h1{font-size:26px}.hero,.panel{border-radius:14px}.report-card{padding:13px}.report-actions{display:block}.report-actions button{width:100%;margin-top:8px}.tabs button{flex:1 1 46%;min-height:42px}}
 @media(max-width:620px){.home-actions{grid-template-columns:1fr}.workspace-bar{display:block}.workspace-bar button{width:100%;margin-top:10px}}
 @media(max-width:460px){.app{padding:8px}.hero,.panel{padding:12px;margin:10px 0}.card{padding:12px}.tabs button{flex-basis:100%}button,a.btn{width:100%;text-align:center}h1{font-size:24px}h2{font-size:20px}}
@@ -237,6 +237,46 @@ function memoKey(url){return 'jw-study-memo:'+url}
 function reportKey(url){return 'jw-study-report:'+url}
 function draftsKey(url){return 'jw-study-drafts:'+url}
 function extraKey(id){return 'jw-extra-study:'+id}
+function findStoredValue(prefix,url){
+  const target=canonicalUrl(url);
+  const direct=localStorage.getItem(prefix+target);
+  if(direct)return {key:prefix+target,value:direct};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k||!k.startsWith(prefix))continue;
+    const rawUrl=k.slice(prefix.length);
+    if(canonicalUrl(rawUrl)===target)return {key:k,value:localStorage.getItem(k)};
+  }
+  return null;
+}
+function canonicalUrl(value){
+  const raw=String(value||'').trim();
+  if(!raw)return '';
+  if(/^file:/i.test(raw))return raw.replace(/\s+/g,' ').toLowerCase();
+  try{
+    const u=new URL(raw);
+    u.hash='';
+    ['v','utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(name=>u.searchParams.delete(name));
+    u.pathname=u.pathname.replace(/\/+$/,'/');
+    return u.href;
+  }catch(e){
+    return raw.replace(/\s+/g,' ');
+  }
+}
+function dataIdentity(data){
+  const url=canonicalUrl(data?.url||currentUrl);
+  if(url)return url;
+  return String(data?.title||'').trim().toLowerCase();
+}
+function dedupeBy(items,fn){
+  const seen=new Set();
+  return (items||[]).filter(item=>{
+    const id=fn(item);
+    if(!id||seen.has(id))return false;
+    seen.add(id);
+    return true;
+  });
+}
 
 function enterWorkspace(mode){
   homeScreen.classList.add('hidden');
@@ -304,6 +344,7 @@ function resetForNewVersion(){
 async function fetchFromWorker(url, deep=true){
   if(isFetching)return;
   const w=workerUrl.value.trim().replace(/\/$/,'');
+  url=canonicalUrl(url);
   if(!w){showStatus('먼저 Cloudflare Worker 주소를 입력하세요. 저장소의 worker.js를 Cloudflare Worker에 배포한 뒤 그 주소를 넣어야 합니다.');return}
   if(!url){showStatus('JW.org 주간 교재 URL을 입력하세요.');return}
   setFetching(true);
@@ -317,7 +358,8 @@ async function fetchFromWorker(url, deep=true){
     const data=await res.json();
     if(data.error) throw new Error(data.error);
     localStorage.setItem(key(url),JSON.stringify(data));
-    currentUrl=url;
+    currentUrl=canonicalUrl(data.url||url);
+    data.url=currentUrl;
     currentData=data;
     renderData(data);
     renderSaved();
@@ -424,20 +466,63 @@ function extractJwLinksFromText(text){
 function uniqueLinks(links){
   const seen=new Set();
   return (links||[]).filter(link=>{
-    if(!link?.url||seen.has(link.url))return false;
-    seen.add(link.url);
+    const id=canonicalUrl(link?.url);
+    if(!id||seen.has(id))return false;
+    seen.add(id);
+    link.url=id;
     return true;
   });
 }
+function uniquePages(pages){
+  return dedupeBy(pages||[],page=>canonicalUrl(page?.url)||String(page?.title||'').trim().toLowerCase()).map(page=>{
+    if(page?.url)page.url=canonicalUrl(page.url);
+    return page;
+  });
+}
+function findExtraStudyId(identity){
+  const target=canonicalUrl(identity);
+  if(!target)return '';
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k||!k.startsWith('jw-extra-study:'))continue;
+    try{
+      const record=JSON.parse(localStorage.getItem(k));
+      const recordIdentity=canonicalUrl(record.identity||record.data?.url||record.url);
+      if(recordIdentity===target)return record.id||k.replace('jw-extra-study:','');
+    }catch(e){}
+  }
+  return '';
+}
+function cleanupExtraDuplicates(keepId,identity){
+  const target=canonicalUrl(identity);
+  if(!target)return;
+  const remove=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k||!k.startsWith('jw-extra-study:'))continue;
+    try{
+      const record=JSON.parse(localStorage.getItem(k));
+      const id=record.id||k.replace('jw-extra-study:','');
+      const recordIdentity=canonicalUrl(record.identity||record.data?.url||record.url);
+      if(id!==keepId&&recordIdentity===target)remove.push(k);
+    }catch(e){}
+  }
+  remove.forEach(k=>localStorage.removeItem(k));
+}
 function saveCurrentExtraStudy(){
   if(!currentData){showStatus('저장할 추가 연구 자료가 없습니다.');return}
-  const id=currentExtraId||String(Date.now());
+  const identity=dataIdentity(currentData);
+  const existingId=currentExtraId||findExtraStudyId(identity);
+  const id=existingId||String(Date.now());
   currentExtraId=id;
-  const record={id,savedAt:new Date().toISOString(),title:currentData.title||'추가 연구',data:currentData,memo:memo.value,report:fullReportText(currentData)};
+  currentData.url=canonicalUrl(currentData.url||currentUrl);
+  currentUrl=currentData.url||currentUrl;
+  const record={id,identity:dataIdentity(currentData),savedAt:new Date().toISOString(),title:currentData.title||'추가 연구',data:currentData,memo:memo.value,report:fullReportText(currentData)};
   localStorage.setItem(extraKey(id),JSON.stringify(record));
+  cleanupExtraDuplicates(id,record.identity);
   renderExtraList();
   updateSaveLabels();
-  showStatus('추가 연구를 저장했습니다.');
+  showStatus(existingId?'기존 추가 연구를 갱신했습니다.':'추가 연구를 저장했습니다.');
 }
 async function fetchWeeklyMeeting(manual=false){
   if(isFetching)return;
@@ -453,7 +538,8 @@ async function fetchWeeklyMeeting(manual=false){
     if(!res.ok)throw new Error('Worker 응답 오류: '+res.status);
     const data=await res.json();
     if(data.error)throw new Error(data.error);
-    currentUrl=data.url;
+    currentUrl=canonicalUrl(data.url);
+    data.url=currentUrl;
     currentData=data;
     pageUrl.value=data.url||pageUrl.value;
     localStorage.setItem('lastJwPageUrl',currentUrl);
@@ -484,7 +570,10 @@ function todayKey(){
 
 function renderData(data){
   currentData=data;
-  currentUrl=data.url||currentUrl;
+  currentUrl=canonicalUrl(data.url||currentUrl);
+  if(currentUrl)data.url=currentUrl;
+  currentData.related=uniqueLinks(currentData.related||[]);
+  currentData.relatedPages=uniquePages(currentData.relatedPages||[]);
   resultTitle.textContent=data.title||'자료 내용';
   sourceUrl.innerHTML=data.url?`원문: <a href="${escapeAttr(data.url)}" target="_blank" rel="noreferrer">${escapeHtml(data.url)}</a>`:'';
   verses.innerHTML=(data.verses||[]).map(v=>`<span class="tag">${escapeHtml(v)}</span>`).join('');
@@ -915,7 +1004,7 @@ function renderBlock(b){
   return `<p>${escapeHtml(b.text)}</p>`;
 }
 function renderLinks(data){
-  const links=data.related||[];
+  const links=uniqueLinks(data.related||[]);
   if(!links.length)return '<p class="muted">링크가 없습니다.</p>';
   const groups=groupBy(links,l=>l.type||'JW.org 자료');
   return Object.keys(groups).map(type=>`
@@ -924,7 +1013,7 @@ function renderLinks(data){
   `).join('');
 }
 function renderRelatedPages(data){
-  const pages=data.relatedPages||[];
+  const pages=uniquePages(data.relatedPages||[]);
   if(!pages.length)return '<p class="muted">아직 링크 내용을 가져오지 않았습니다. 본문과 링크 자료 가져오기를 누르세요.</p>';
   return pages.map(p=>`<details><summary>${escapeHtml(p.title||p.url)}${p.error?' - 오류':''}</summary><p class="small muted">${escapeHtml(p.url)}</p>${p.error?`<p class="warn">${escapeHtml(p.error)}</p>`:pointList(topPoints(p.blocks||[],8))}</details>`).join('');
 }
@@ -1032,7 +1121,7 @@ function escapeRegExp(text){return String(text).replace(/[.*+?^${}()|[\]\\]/g,'\
 window.fetchRelated=async encoded=>{await fetchFromWorker(decodeURIComponent(encoded),false)}
 window.fetchCurrentRelatedPages=async()=>{
   if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
-  const links=(currentData.related||[]).slice(0,30);
+  const links=uniqueLinks(currentData.related||[]).slice(0,30);
   if(!links.length){showStatus('가져올 관련 링크가 없습니다.');return}
   const w=workerUrl.value.trim().replace(/\/$/,'');
   showStatus('관련 링크 내용을 가져오는 중입니다...');
@@ -1047,7 +1136,7 @@ window.fetchCurrentRelatedPages=async()=>{
       pages.push({url:link.url,title:link.text||link.url,error:String(e.message||e)});
     }
   }
-  currentData.relatedPages=pages;
+  currentData.relatedPages=uniquePages(pages);
   renderData(currentData);
   showStatus('관련 링크 내용을 가져왔습니다.');
 }
@@ -1096,6 +1185,8 @@ saveReportBtn.onclick=()=>{
     saveCurrentExtraStudy();
     return;
   }
+  currentUrl=canonicalUrl(currentUrl);
+  currentData.url=currentUrl;
   const reportText=fullReportText(currentData);
   const record={savedAt:new Date().toISOString(),url:currentUrl,title:currentData.title||'',report:reportText,memo:memo.value,drafts:readDrafts()};
   localStorage.setItem(reportKey(currentUrl),JSON.stringify(record));
@@ -1104,11 +1195,12 @@ saveReportBtn.onclick=()=>{
 }
 saveMemo.onclick=()=>{if(!currentUrl){showStatus('먼저 자료를 가져오세요.');return}localStorage.setItem(memoKey(currentUrl),memo.value);memoState.textContent='메모가 저장되었습니다.'}
 function renderSaved(){
-  const items=[];
-  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('jw-study-cache:')){try{const d=JSON.parse(localStorage.getItem(k));items.push({url:k.replace('jw-study-cache:',''),title:d.title||k})}catch(e){}}}
+  const byUrl=new Map();
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('jw-study-cache:')){try{const d=JSON.parse(localStorage.getItem(k));const url=canonicalUrl(d.url||k.replace('jw-study-cache:',''));if(url&&!byUrl.has(url))byUrl.set(url,{url,title:d.title||k})}catch(e){}}}
+  const items=[...byUrl.values()];
   savedList.innerHTML=items.map(x=>`<a href="#" onclick="loadSaved('${encodeURIComponent(x.url)}');return false;"><b>${escapeHtml(x.title)}</b><br><span class="small muted">${escapeHtml(x.url)}</span></a>`).join('')||'<p class="muted">아직 저장된 자료가 없습니다.</p>';
 }
-window.loadSaved=encoded=>{const url=decodeURIComponent(encoded);const raw=localStorage.getItem(key(url));if(raw){currentUrl=url;renderData(JSON.parse(raw))}}
+window.loadSaved=encoded=>{const url=canonicalUrl(decodeURIComponent(encoded));const stored=findStoredValue('jw-study-cache:',url);if(stored?.value){currentUrl=url;renderData(JSON.parse(stored.value))}}
 function restoreLastStudy(){
   const url=localStorage.getItem('lastJwPageUrl')||'';
   if(!url)return;
@@ -1127,16 +1219,20 @@ function autoFetchWeeklyIfNeeded(){
   if(!currentData||lastWeekly!==todayKey())fetchWeeklyMeeting(false);
 }
 function renderReportList(){
-  const items=[];
+  const byUrl=new Map();
   for(let i=0;i<localStorage.length;i++){
     const k=localStorage.key(i);
     if(k&&k.startsWith('jw-study-report:')){
       try{
         const record=JSON.parse(localStorage.getItem(k));
-        items.push({key:k,url:k.replace('jw-study-report:',''),...record});
+        const url=canonicalUrl(record.url||k.replace('jw-study-report:',''));
+        const item={key:k,url,...record};
+        const prev=byUrl.get(url);
+        if(!prev||String(item.savedAt||'').localeCompare(String(prev.savedAt||''))>0)byUrl.set(url,item);
       }catch(e){}
     }
   }
+  const items=[...byUrl.values()];
   items.sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||'')));
   reportList.innerHTML=items.map(item=>`
     <div class="card">
@@ -1148,13 +1244,27 @@ function renderReportList(){
     </div>`).join('')||'<p class="muted">저장된 리포트가 없습니다.</p>';
 }
 function renderExtraList(){
-  const items=[];
+  const byIdentity=new Map();
+  const duplicateKeys=[];
   for(let i=0;i<localStorage.length;i++){
     const k=localStorage.key(i);
     if(k&&k.startsWith('jw-extra-study:')){
-      try{items.push(JSON.parse(localStorage.getItem(k)))}catch(e){}
+      try{
+        const item=JSON.parse(localStorage.getItem(k));
+        const identity=canonicalUrl(item.identity||item.data?.url||item.url)||String(item.title||'').trim().toLowerCase();
+        item.identity=identity;
+        const prev=byIdentity.get(identity);
+        if(!prev||String(item.savedAt||'').localeCompare(String(prev.savedAt||''))>0){
+          if(prev)duplicateKeys.push(extraKey(prev.id));
+          byIdentity.set(identity,item);
+        }else{
+          duplicateKeys.push(k);
+        }
+      }catch(e){}
     }
   }
+  duplicateKeys.forEach(k=>localStorage.removeItem(k));
+  const items=[...byIdentity.values()];
   items.sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||'')));
   extraList.innerHTML=items.map(item=>`
     <div class="card">
@@ -1192,10 +1302,10 @@ window.copyExtraStudy=async id=>{
   }catch(e){showStatus(e.message)}
 }
 window.loadSavedReport=encoded=>{
-  const url=decodeURIComponent(encoded);
-  const raw=localStorage.getItem(reportKey(url));
-  if(!raw){showStatus('저장된 리포트를 찾지 못했습니다.');return}
-  const record=JSON.parse(raw);
+  const url=canonicalUrl(decodeURIComponent(encoded));
+  const stored=findStoredValue('jw-study-report:',url);
+  if(!stored?.value){showStatus('저장된 리포트를 찾지 못했습니다.');return}
+  const record=JSON.parse(stored.value);
   if(record.drafts)writeDrafts(record.drafts,url);
   report.innerHTML=`<pre>${escapeHtml(record.report||'')}</pre>`;
   memo.value=record.memo||'';
@@ -1204,18 +1314,19 @@ window.loadSavedReport=encoded=>{
   showStatus('저장된 리포트를 불러왔습니다.');
 }
 window.copySavedReport=async encoded=>{
-  const url=decodeURIComponent(encoded);
-  const raw=localStorage.getItem(reportKey(url));
-  if(!raw){showStatus('저장된 리포트를 찾지 못했습니다.');return}
-  const record=JSON.parse(raw);
+  const url=canonicalUrl(decodeURIComponent(encoded));
+  const stored=findStoredValue('jw-study-report:',url);
+  if(!stored?.value){showStatus('저장된 리포트를 찾지 못했습니다.');return}
+  const record=JSON.parse(stored.value);
   try{
     await copyText(record.report||'');
     showStatus('저장된 리포트를 복사했습니다.');
   }catch(e){showStatus(e.message)}
 }
 window.deleteSavedReport=encoded=>{
-  const url=decodeURIComponent(encoded);
-  localStorage.removeItem(reportKey(url));
+  const url=canonicalUrl(decodeURIComponent(encoded));
+  const stored=findStoredValue('jw-study-report:',url);
+  localStorage.removeItem(stored?.key||reportKey(url));
   renderReportList();
   showStatus('저장된 리포트를 삭제했습니다.');
 }
