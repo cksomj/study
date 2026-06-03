@@ -8,7 +8,7 @@
 :root{--bg:#f5f2ea;--card:#fffdf8;--ink:#253238;--muted:#65716c;--line:#e3dbce;--brand:#506f62;--accent:#b67647;--soft:#edf4ef;--warn:#fff7ea}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
 .app{width:min(100%,1280px);margin:auto;padding:clamp(10px,2vw,22px)}.hero,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2vw,20px);margin:14px 0;box-shadow:0 10px 26px #00000010}
-.home-screen{min-height:calc(100vh - 44px);display:grid;place-items:center}.home-card{width:min(100%,780px);background:linear-gradient(145deg,#fffdf8,#edf4ef);border:1px solid var(--line);border-radius:26px;padding:clamp(24px,5vw,46px);box-shadow:0 24px 70px #25323820}.home-kicker{display:inline-block;background:var(--soft);color:var(--brand);border-radius:999px;padding:8px 12px;font-weight:900}.home-title{font-size:clamp(34px,8vw,64px);line-height:1;margin:18px 0 10px;letter-spacing:0}.home-pass{font-size:18px;font-weight:900;color:var(--accent);margin:0 0 28px}.home-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}.home-actions button{min-height:64px;font-size:18px}.home-reset{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}.workspace.hidden,.home-screen.hidden{display:none}.workspace-bar{display:flex;justify-content:space-between;align-items:center;gap:10px}.workspace-bar h2{margin:0}
+.home-screen{min-height:calc(100vh - 44px);display:grid;place-items:center}.home-card{width:min(100%,780px);background:linear-gradient(145deg,#fffdf8,#edf4ef);border:1px solid var(--line);border-radius:26px;padding:clamp(24px,5vw,46px);box-shadow:0 24px 70px #25323820}.home-kicker{display:inline-block;background:var(--soft);color:var(--brand);border-radius:999px;padding:8px 12px;font-weight:900}.home-title{font-size:clamp(34px,8vw,64px);line-height:1;margin:18px 0 10px;letter-spacing:0}.login-box{background:#ffffffb8;border:1px solid var(--line);border-radius:18px;padding:14px;margin:22px 0}.login-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}.login-message{margin:8px 0 0;color:var(--accent);font-weight:800}.home-actions{display:none;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}.home-actions.unlocked{display:grid}.home-actions button{min-height:64px;font-size:18px}.home-reset{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}.workspace.hidden,.home-screen.hidden{display:none}.workspace-bar{display:flex;justify-content:space-between;align-items:center;gap:10px}.workspace-bar h2{margin:0}
 .hero{background:linear-gradient(135deg,#fffdf8,#e9f2ee)}h1{margin:0 0 8px;font-size:32px}h2{margin:0 0 12px;font-size:22px}h3{margin:18px 0 8px}
 .muted{color:var(--muted);line-height:1.65}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row input{flex:1 1 220px;min-width:0}
 input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px;background:white}textarea{min-height:150px}
@@ -35,8 +35,15 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
     <div class="home-card">
       <span class="home-kicker">Personal Study Workspace</span>
       <h1 class="home-title">Watch tower study Ver.1</h1>
-      <p class="home-pass">비번 191482</p>
-      <div class="home-actions">
+      <div class="login-box">
+        <label class="small muted" for="loginPass"><b>비밀번호</b></label>
+        <div class="login-row">
+          <input id="loginPass" type="password" inputmode="numeric" autocomplete="current-password" placeholder="비밀번호 입력">
+          <button id="loginBtn">로그인</button>
+        </div>
+        <p id="loginMessage" class="login-message"></p>
+      </div>
+      <div id="homeActions" class="home-actions">
         <button id="homeWeeklyBtn">주간집회예습</button>
         <button id="homePersonalBtn" class="secondary">개인연구</button>
       </div>
@@ -160,6 +167,7 @@ let currentUrl='';
 let currentData=null;
 let currentMode='weekly';
 let currentExtraId='';
+const appPassword='191482';
 const sampleUrl='https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-5월-6월-집회-교재/생활과-봉사-집회-계획표-2026년-6월-1-7일/';
 const defaultWorkerUrl='https://jw-study-fetcher.cksomj.workers.dev';
 const workerUrl=$('workerUrl');
@@ -168,6 +176,10 @@ const workspace=$('workspace');
 const workspaceTitle=$('workspaceTitle');
 const heroTag=$('heroTag');
 const heroTitle=$('heroTitle');
+const loginPass=$('loginPass');
+const loginBtn=$('loginBtn');
+const loginMessage=$('loginMessage');
+const homeActions=$('homeActions');
 const homeWeeklyBtn=$('homeWeeklyBtn');
 const homePersonalBtn=$('homePersonalBtn');
 const homeBackBtn=$('homeBackBtn');
@@ -209,6 +221,8 @@ let isFetching=false;
 workerUrl.value=localStorage.getItem('jwWorkerUrl')||defaultWorkerUrl;
 pageUrl.value=localStorage.getItem('lastJwPageUrl')||sampleUrl;
 workerUrl.onchange=()=>localStorage.setItem('jwWorkerUrl',workerUrl.value.trim());
+loginBtn.onclick=()=>login();
+loginPass.onkeydown=e=>{if(e.key==='Enter')login()};
 homeWeeklyBtn.onclick=()=>enterWorkspace('weekly');
 homePersonalBtn.onclick=()=>enterWorkspace('extra');
 homeBackBtn.onclick=()=>showHome();
@@ -232,6 +246,27 @@ saveExtraBtn.onclick=()=>saveCurrentExtraStudy();
 
 function showStatus(msg){statusBox.style.display='block';statusBox.textContent=msg}
 function hideStatus(){statusBox.style.display='none'}
+function isUnlocked(){return sessionStorage.getItem('jwStudyUnlocked')==='1'}
+function updateLoginState(){
+  const unlocked=isUnlocked();
+  homeActions.classList.toggle('unlocked',unlocked);
+  loginPass.disabled=unlocked;
+  loginBtn.textContent=unlocked?'로그인됨':'로그인';
+  loginBtn.disabled=unlocked;
+  loginMessage.textContent=unlocked?'로그인되었습니다. 원하는 예습 메뉴를 선택하세요.':'';
+}
+function login(){
+  if(loginPass.value.trim()===appPassword){
+    sessionStorage.setItem('jwStudyUnlocked','1');
+    loginPass.value='';
+    updateLoginState();
+    return;
+  }
+  sessionStorage.removeItem('jwStudyUnlocked');
+  updateLoginState();
+  loginMessage.textContent='비밀번호가 맞지 않습니다.';
+  loginPass.focus();
+}
 function key(url){return 'jw-study-cache:'+url}
 function memoKey(url){return 'jw-study-memo:'+url}
 function reportKey(url){return 'jw-study-report:'+url}
@@ -279,6 +314,12 @@ function dedupeBy(items,fn){
 }
 
 function enterWorkspace(mode){
+  if(!isUnlocked()){
+    showHome();
+    loginMessage.textContent='먼저 비밀번호로 로그인하세요.';
+    loginPass.focus();
+    return;
+  }
   homeScreen.classList.add('hidden');
   workspace.classList.remove('hidden');
   switchMode(mode);
@@ -293,6 +334,7 @@ function enterWorkspace(mode){
 function showHome(){
   workspace.classList.add('hidden');
   homeScreen.classList.remove('hidden');
+  updateLoginState();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function switchMode(mode){
@@ -338,6 +380,7 @@ function resetForNewVersion(){
     if(k&&(/^(jw-study-|jw-extra-study:|lastJwPageUrl|lastWeeklyStudyDate|jwWorkerUrl)/.test(k)))remove.push(k);
   }
   remove.forEach(k=>localStorage.removeItem(k));
+  sessionStorage.removeItem('jwStudyUnlocked');
   location.href=location.pathname+'?v='+Date.now();
 }
 
@@ -1545,6 +1588,7 @@ function plainStudyQuestionReport(questions, blocks){
     return `- ${q}\n${snippets}`;
   }).join('\n');
 }
+updateLoginState();
 renderSaved();
 renderReportList();
 renderExtraList();
