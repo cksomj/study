@@ -12,6 +12,7 @@
 .muted{color:var(--muted);line-height:1.65}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center}.row input{flex:1}
 input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px;background:white}textarea{min-height:150px}
 button,a.btn{border:0;border-radius:12px;background:var(--brand);color:#fff;padding:12px 14px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
+button:disabled{opacity:.62;cursor:wait}
 button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;color:var(--brand);border:1px solid var(--line)}
 .grid{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:14px;align-items:start}.grid aside,.grid main{min-width:0}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}.report-card{padding:16px}.report-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}.report-head h3{margin:0 0 6px}.report-head button{white-space:nowrap;padding:9px 10px}.prep-box,.study-range{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.prep-box h4,.study-range h4{margin:0 0 8px}.prep-box ul{margin:0;padding-left:20px}.study-range p{margin:4px 0}.tag{display:inline-block;background:var(--soft);color:#2f5e50;border-radius:999px;padding:6px 9px;margin:3px;font-weight:800;font-size:12px}
@@ -133,6 +134,7 @@ const report=$('report');
 const contentTab=$('contentTab');
 const linksTab=$('linksTab');
 const relatedTab=$('relatedTab');
+let isFetching=false;
 
 workerUrl.value=localStorage.getItem('jwWorkerUrl')||defaultWorkerUrl;
 pageUrl.value=localStorage.getItem('lastJwPageUrl')||sampleUrl;
@@ -155,24 +157,35 @@ function reportKey(url){return 'jw-study-report:'+url}
 function draftsKey(url){return 'jw-study-drafts:'+url}
 
 async function fetchFromWorker(url, deep=true){
+  if(isFetching)return;
   const w=workerUrl.value.trim().replace(/\/$/,'');
   if(!w){showStatus('먼저 Cloudflare Worker 주소를 입력하세요. 저장소의 worker.js를 Cloudflare Worker에 배포한 뒤 그 주소를 넣어야 합니다.');return}
   if(!url){showStatus('JW.org 주간 교재 URL을 입력하세요.');return}
+  setFetching(true);
   localStorage.setItem('jwWorkerUrl',w);
   localStorage.setItem('lastJwPageUrl',url);
   showStatus('본문과 링크 자료를 가져오는 중입니다. 링크가 많으면 시간이 조금 걸립니다...');
-  const api=w+'/?url='+encodeURIComponent(url)+'&deep='+(deep?'1':'0')+'&limit=50';
-  const res=await fetch(api);
-  if(!res.ok) throw new Error('Worker 응답 오류: '+res.status);
-  const data=await res.json();
-  if(data.error) throw new Error(data.error);
-  localStorage.setItem(key(url),JSON.stringify(data));
-  currentUrl=url;
-  currentData=data;
-  renderData(data);
-  renderSaved();
-  renderReportList();
-  hideStatus();
+  try{
+    const api=w+'/?url='+encodeURIComponent(url)+'&deep='+(deep?'1':'0')+'&limit=50';
+    const res=await fetch(api);
+    if(!res.ok) throw new Error('Worker 응답 오류: '+res.status);
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    localStorage.setItem(key(url),JSON.stringify(data));
+    currentUrl=url;
+    currentData=data;
+    renderData(data);
+    renderSaved();
+    renderReportList();
+    showStatus('자료를 가져왔습니다. 예습 리포트를 확인해 보세요.');
+  }finally{
+    setFetching(false);
+  }
+}
+function setFetching(value){
+  isFetching=value;
+  fetchBtn.disabled=value;
+  fetchBtn.textContent=value?'가져오는 중...':'본문과 링크 자료 가져오기';
 }
 
 function renderData(data){
