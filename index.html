@@ -18,7 +18,7 @@ button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;
 .warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
-.search-box{background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}.search-box .row{align-items:stretch}.search-result mark{background:#fff0a6;border-radius:4px;padding:0 2px}.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft summary{font-weight:900}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.search-box{background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}.search-box .row{align-items:stretch}.search-result mark{background:#fff0a6;border-radius:4px;padding:0 2px}.search-result .card button{margin:4px 0 6px}.section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft summary{font-weight:900}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
 p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.linkList{min-width:0}
 @media(max-width:980px){.grid,.two,.draft-grid{grid-template-columns:1fr}.grid main{order:1}.grid aside{order:2}.row{display:block}.row button{width:100%;margin-top:8px}h1{font-size:26px}.hero,.panel{border-radius:14px}.report-card{padding:13px}.tabs button{flex:1 1 46%;min-height:42px}}
@@ -555,16 +555,18 @@ function renderSearchResults(){
     <div class="card">
       <p><span class="tag">${escapeHtml(item.sourceType)}</span> <b>${escapeHtml(item.title)}</b></p>
       <p>${highlightTerms(item.text,words)}</p>
+      <button class="ghost" onclick="addSearchResultToMemo('${escapeAttr(item.id)}')">메모에 담기</button>
       ${item.url?`<p class="small muted"><a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>`:''}
     </div>`).join('');
 }
 function searchCorpus(data,words){
   const corpus=[
-    ...(data.blocks||[]).map((b,i)=>({title:data.title||'주간 교재 본문',sourceType:'본문',url:data.url||'',text:b.text||'',index:i}))
+    ...(data.blocks||[]).map((b,i)=>({id:'main-'+i,title:data.title||'주간 교재 본문',sourceType:'본문',url:data.url||'',text:b.text||'',index:i}))
   ];
-  (data.relatedPages||[]).forEach(page=>{
+  (data.relatedPages||[]).forEach((page,pageIndex)=>{
     if(page.error)return;
     (page.blocks||[]).forEach((b,i)=>corpus.push({
+      id:'page-'+pageIndex+'-'+i,
       title:page.title||page.sourceText||page.url||'링크 자료',
       sourceType:page.sourceType||'링크 자료',
       url:page.url||'',
@@ -581,6 +583,18 @@ function searchCorpus(data,words){
     },0);
     return {...item,text,score};
   }).filter(item=>item.text.length>12&&item.score>0).sort((a,b)=>b.score-a.score||a.index-b.index);
+}
+window.addSearchResultToMemo=id=>{
+  if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
+  const q=searchInput.value.trim();
+  const words=importantWords(q).length?importantWords(q):[q];
+  const item=searchCorpus(currentData,words).find(x=>x.id===id);
+  if(!item){showStatus('검색 결과를 다시 찾지 못했습니다. 검색을 다시 실행해 보세요.');return}
+  const text=`[검색 메모] ${item.title}\n${item.text}${item.url?'\n원문: '+item.url:''}`;
+  memo.value=(memo.value?memo.value+'\n\n':'')+text;
+  if(currentUrl)localStorage.setItem(memoKey(currentUrl),memo.value);
+  memoState.textContent='검색 결과를 메모에 담았습니다.';
+  showStatus('검색 결과를 메모에 담았습니다.');
 }
 function highlightTerms(text,words){
   let html=escapeHtml(text);
