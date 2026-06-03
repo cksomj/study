@@ -143,11 +143,13 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
         <p class="muted" id="sourceUrl"></p>
         <div id="verses"></div>
         <div class="search-box">
-          <label class="small muted" for="searchInput"><b>가져온 자료 전체에서 찾기</b></label>
+          <label class="small muted" for="searchInput"><b>JW.org에서 자료 찾기</b></label>
           <div class="row" style="margin-top:6px">
-            <input id="searchInput" placeholder="예: 여호와, 용기, 가정, 봉사, 렘 2:28">
-            <button id="searchBtn" class="ghost">찾기</button>
+            <input id="searchInput" placeholder="예: 여호와 사랑, 용기, 가정, 봉사, 렘 2:28">
+            <button id="searchBtn" class="secondary">JW.org 검색</button>
+            <button id="localSearchBtn" class="ghost">현재 자료 안에서 찾기</button>
           </div>
+          <div id="relatedTerms" class="small muted" style="margin-top:8px"></div>
           <div id="searchResults" class="search-result"></div>
         </div>
         <div class="tabs">
@@ -229,6 +231,8 @@ const sourceUrl=$('sourceUrl');
 const verses=$('verses');
 const searchInput=$('searchInput');
 const searchBtn=$('searchBtn');
+const localSearchBtn=$('localSearchBtn');
+const relatedTerms=$('relatedTerms');
 const searchResults=$('searchResults');
 const report=$('report');
 const contentTab=$('contentTab');
@@ -247,9 +251,10 @@ homeBackBtn.onclick=()=>showHome();
 versionResetBtn.onclick=()=>resetForNewVersion();
 sampleBtn.onclick=()=>pageUrl.value=sampleUrl;
 weeklyBtn.onclick=()=>fetchWeeklyMeeting(true);
-searchBtn.onclick=()=>renderSearchResults();
-searchInput.onkeydown=e=>{if(e.key==='Enter')renderSearchResults()};
-searchInput.oninput=()=>{if(searchInput.value.trim().length>=2)renderSearchResults()};
+searchBtn.onclick=()=>searchJwOrg();
+localSearchBtn.onclick=()=>renderLocalSearchResults();
+searchInput.onkeydown=e=>{if(e.key==='Enter')searchJwOrg()};
+searchInput.oninput=()=>renderRelatedTerms();
 
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b===btn));
@@ -407,6 +412,7 @@ function newExtraProject(){
   linksTab.innerHTML='';
   relatedTab.innerHTML='';
   searchInput.value='';
+  relatedTerms.innerHTML='';
   searchResults.innerHTML='';
   memo.value='';
   memoState.textContent='새 연구 프로젝트';
@@ -665,7 +671,8 @@ function renderData(data){
   linksTab.innerHTML=renderLinks(data);
   relatedTab.innerHTML=renderRelatedPages(data);
   report.innerHTML=buildReport(data);
-  renderSearchResults();
+  renderRelatedTerms();
+  renderLocalSearchResults(true);
   hydrateDraftInputs();
   memo.value=localStorage.getItem(memoKey(currentUrl))||'';
   memoState.textContent=currentUrl?'메모 저장 기준: '+currentUrl:'';
@@ -1121,24 +1128,98 @@ function renderRelatedPages(data){
   return pages.map(p=>`<details><summary>${escapeHtml(p.title||p.url)}${p.error?' - 오류':''}</summary><p class="small muted">${escapeHtml(p.url)}</p>${p.error?`<p class="warn">${escapeHtml(p.error)}</p>`:pointList(topPoints(p.blocks||[],8))}</details>`).join('');
 }
 
-function renderSearchResults(){
+function renderRelatedTerms(){
+  if(!relatedTerms)return;
+  const terms=relatedSearchTerms().slice(0,10);
+  if(!terms.length){
+    relatedTerms.innerHTML='<span>자료를 가져오면 관련어 후보가 표시됩니다.</span>';
+    return;
+  }
+  relatedTerms.innerHTML='관련어 후보: '+terms.map(term=>`<button class="ghost" type="button" onclick="addSearchTerm('${escapeAttr(term)}')">${escapeHtml(term)}</button>`).join(' ');
+}
+function relatedSearchTerms(){
+  const q=importantWords(searchInput.value);
+  const fromData=currentData?importantWords(textOf(currentData.blocks||[])).slice(0,12):[];
+  const fromQuestions=currentData?genericStudyQuestions(currentData.blocks||[]).flatMap(x=>importantWords(x).slice(0,2)):[];
+  return uniqueTexts([...q,...fromData,...fromQuestions]).filter(x=>String(x).length>1);
+}
+window.addSearchTerm=term=>{
+  const existing=importantWords(searchInput.value);
+  const next=uniqueTexts([...existing,term]).slice(0,8);
+  searchInput.value=next.join(' ');
+  renderRelatedTerms();
+}
+async function searchJwOrg(){
+  const q=searchInput.value.trim();
+  if(q.length<2){searchResults.innerHTML='<p class="small muted">JW.org에서 검색할 단어를 두 글자 이상 입력하세요.</p>';return}
+  const w=workerUrl.value.trim().replace(/\/$/,'');
+  if(!w){showStatus('Worker 주소가 없어 JW.org 검색을 실행할 수 없습니다.');return}
+  const terms=relatedSearchTerms().slice(0,10).join(' ');
+  searchBtn.disabled=true;
+  searchBtn.textContent='검색 중...';
+  searchResults.innerHTML='<p class="muted">JW.org에서 검색하고 관련 자료 내용을 가져오는 중입니다...</p>';
+  showStatus('JW.org 검색 결과와 관련 자료 내용을 가져오는 중입니다...');
+  try{
+    const api=w+'/?mode=search&q='+encodeURIComponent(q)+'&terms='+encodeURIComponent(terms)+'&limit=8';
+    const res=await fetch(api);
+    const data=await res.json();
+    if(!res.ok||data.error)throw new Error(data.error||('Worker 응답 오류: '+res.status));
+    const pages=uniquePages(data.relatedPages||[]);
+    if(!currentData){
+      currentData={url:'jw-search:'+q,title:'JW.org 검색: '+q,blocks:[],verses:[],related:[],relatedPages:[],sections:{spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+      currentUrl=currentData.url;
+    }
+    currentData.relatedPages=uniquePages([...(currentData.relatedPages||[]),...pages]);
+    currentData.related=uniqueLinks([...(currentData.related||[]),...(data.results||[]).map(item=>({url:item.url,text:item.text||item.query||item.url,type:'JW.org 검색'}))]);
+    relatedTab.innerHTML=renderRelatedPages(currentData);
+    linksTab.innerHTML=renderLinks(currentData);
+    report.innerHTML=buildReport(currentData);
+    hydrateDraftInputs();
+    renderJwSearchResults(data,pages);
+    showStatus('JW.org 검색 자료를 가져왔습니다. 관련 자료 분석과 리포트에 반영했습니다.');
+  }catch(e){
+    searchResults.innerHTML='<p class="warn">'+escapeHtml(e.message)+'</p>';
+    showStatus('JW.org 검색 실패: '+e.message);
+  }finally{
+    searchBtn.disabled=false;
+    searchBtn.textContent='JW.org 검색';
+  }
+}
+function renderJwSearchResults(data,pages){
+  const queries=data.searchQueries||[];
+  if(!pages.length){
+    searchResults.innerHTML='<p class="muted">JW.org에서 가져온 관련 자료가 없습니다. 검색어를 조금 다르게 입력해 보세요.</p>';
+    return;
+  }
+  searchResults.innerHTML=`
+    <h4>JW.org 검색 결과 ${pages.length}개</h4>
+    ${queries.length?`<p class="small muted">함께 검색한 관련어: ${queries.map(escapeHtml).join(', ')}</p>`:''}
+    ${pages.map(page=>`
+      <div class="card">
+        <p><span class="tag">JW.org 검색</span> <b>${escapeHtml(page.title||page.sourceText||page.url)}</b></p>
+        <p class="small muted">${escapeHtml(page.url||'')}</p>
+        ${page.error?`<p class="warn">${escapeHtml(page.error)}</p>`:pointList(topPoints(page.blocks||[],4))}
+        ${page.url?`<a class="btn ghost" href="${escapeAttr(page.url)}" target="_blank" rel="noreferrer">원문 열기</a>`:''}
+      </div>`).join('')}`;
+}
+function renderLocalSearchResults(silent=false){
   if(!searchResults)return;
   const q=searchInput.value.trim();
   if(!currentData){
-    searchResults.innerHTML='<p class="small muted">자료를 가져오면 전체 검색을 사용할 수 있습니다.</p>';
+    if(!silent)searchResults.innerHTML='<p class="small muted">자료를 가져오면 현재 자료 안에서 찾을 수 있습니다. JW.org 검색은 자료가 없어도 사용할 수 있습니다.</p>';
     return;
   }
   if(q.length<2){
-    searchResults.innerHTML='<p class="small muted">두 글자 이상 입력하면 본문과 링크 자료 전체에서 근거 문단을 찾습니다.</p>';
+    if(!silent)searchResults.innerHTML='<p class="small muted">두 글자 이상 입력하면 현재 본문과 가져온 링크 자료 안에서 근거 문단을 찾습니다.</p>';
     return;
   }
   const words=importantWords(q).length?importantWords(q):[q];
   const matches=searchCorpus(currentData,words).slice(0,12);
   if(!matches.length){
-    searchResults.innerHTML='<p class="small muted">검색어와 맞는 문단을 찾지 못했습니다.</p>';
+    if(!silent)searchResults.innerHTML='<p class="small muted">현재 가져온 자료 안에서는 검색어와 맞는 문단을 찾지 못했습니다. JW.org 검색을 사용해 보세요.</p>';
     return;
   }
-  searchResults.innerHTML=`<h4>검색 결과 ${matches.length}개</h4>`+matches.map(item=>`
+  searchResults.innerHTML=`<h4>현재 자료 검색 결과 ${matches.length}개</h4>`+matches.map(item=>`
     <div class="card">
       <p><span class="tag">${escapeHtml(item.sourceType)}</span> <b>${escapeHtml(item.title)}</b></p>
       <p>${highlightTerms(item.text,words)}</p>
@@ -1188,9 +1269,10 @@ window.searchFromQuestion=encoded=>{
   const question=decodeURIComponent(encoded);
   const terms=questionKeywords(question).filter(w=>String(w).length>1).slice(0,8);
   searchInput.value=(terms.length?terms:[question]).join(' ');
-  renderSearchResults();
+  renderRelatedTerms();
+  searchJwOrg();
   document.querySelector('.search-box')?.scrollIntoView({behavior:'smooth',block:'start'});
-  showStatus('질문 핵심어로 자료를 검색했습니다.');
+  showStatus('질문 핵심어로 JW.org 자료를 검색합니다.');
 }
 window.copyReportSection=async encoded=>{
   const title=decodeURIComponent(encoded);
