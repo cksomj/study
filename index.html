@@ -6,21 +6,23 @@
 <title>JW 생활과 봉사 예습 앱</title>
 <style>
 :root{--bg:#f5f2ea;--card:#fffdf8;--ink:#253238;--muted:#65716c;--line:#e3dbce;--brand:#506f62;--accent:#b67647;--soft:#edf4ef;--warn:#fff7ea}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
-.app{max-width:1180px;margin:auto;padding:18px}.hero,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 10px 26px #00000010}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
+.app{width:min(100%,1280px);margin:auto;padding:clamp(10px,2vw,22px)}.hero,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2vw,20px);margin:14px 0;box-shadow:0 10px 26px #00000010}
 .hero{background:linear-gradient(135deg,#fffdf8,#e9f2ee)}h1{margin:0 0 8px;font-size:32px}h2{margin:0 0 12px;font-size:22px}h3{margin:18px 0 8px}
 .muted{color:var(--muted);line-height:1.65}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center}.row input{flex:1}
 input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px;background:white}textarea{min-height:150px}
 button,a.btn{border:0;border-radius:12px;background:var(--brand);color:#fff;padding:12px 14px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
 button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;color:var(--brand);border:1px solid var(--line)}
-.grid{display:grid;grid-template-columns:360px 1fr;gap:14px}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:14px;align-items:start}.grid aside,.grid main{min-width:0}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}.report-card{padding:16px}.report-head{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}.report-head h3{margin:0 0 6px}.prep-box,.study-range{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.prep-box h4,.study-range h4{margin:0 0 8px}.prep-box ul{margin:0;padding-left:20px}.study-range p{margin:4px 0}.tag{display:inline-block;background:var(--soft);color:#2f5e50;border-radius:999px;padding:6px 9px;margin:3px;font-weight:800;font-size:12px}
 .warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
 .section{display:none}.section.on{display:block}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft summary{font-weight:900}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
-@media(max-width:820px){.grid,.two,.draft-grid{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}.app{padding:12px}h1{font-size:26px}.hero,.panel{border-radius:14px;padding:14px}.report-card{padding:13px}.tabs button{flex:1 1 46%;min-height:42px}}
+p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.linkList{min-width:0}
+@media(max-width:980px){.grid,.two,.draft-grid{grid-template-columns:1fr}.row{display:block}.row button{width:100%;margin-top:8px}h1{font-size:26px}.hero,.panel{border-radius:14px}.report-card{padding:13px}.tabs button{flex:1 1 46%;min-height:42px}}
+@media(max-width:460px){.app{padding:8px}.hero,.panel{padding:12px;margin:10px 0}.card{padding:12px}.tabs button{flex-basis:100%}button,a.btn{width:100%;text-align:center}h1{font-size:24px}h2{font-size:20px}}
 </style>
 </head>
 <body>
@@ -316,6 +318,7 @@ function congregationStudyReport(studyBlocks, primaryPage, pages){
   const studySource=studyMainBlocks(primaryPage?.blocks||studyBlocks);
   const points=primaryPage ? topPoints(studySource,7) : topPoints(studyBlocks,5);
   const questions=studyQuestions(primaryPage, studyBlocks);
+  const chapterReport=studyChapterQuestionCards(primaryPage, studyBlocks);
   return `
     <div class="study-range">
       <h4>이번 연구 범위</h4>
@@ -327,7 +330,7 @@ function congregationStudyReport(studyBlocks, primaryPage, pages){
     <h4>핵심 흐름</h4>
     ${pointList(points)}
     ${questions.length?`<h4>토의 질문 후보</h4>${questionList(questions.slice(0,8))}`:''}
-    ${studyQuestionCards(questions, primaryPage, studyBlocks)}
+    ${chapterReport||studyQuestionCards(questions, primaryPage, studyBlocks)}
     ${candidatePages('확인할 원문 링크', pages, 1)}
   `;
 }
@@ -356,6 +359,34 @@ function studyQuestionCards(questions, primaryPage, studyBlocks){
     const snippets=studyAnswerSnippets(q,blocks);
     return questionPrepCard(q,snippets,'회중성서연구');
   }).join('');
+}
+function studyChapterQuestionCards(primaryPage, studyBlocks){
+  const chapters=studyChapters(primaryPage?.blocks||[]);
+  if(!chapters.length)return '';
+  return `<h4>장별 예비 해설점</h4>`+chapters.map(chapter=>{
+    const qs=uniqueTexts([...extractQuestions(chapter.blocks).slice(0,6), ...chapterEndQuestions()]);
+    return `<details class="candidate" open>
+      <summary>${escapeHtml(chapter.title)}</summary>
+      <p class="muted">이 장의 내용을 근거로 장 끝 질문에 사용할 해설점을 준비합니다.</p>
+      ${pointList(topPoints(chapter.blocks,4))}
+      ${qs.map(q=>questionPrepCard(q,studyAnswerSnippets(q,chapter.blocks),chapter.title)).join('')}
+    </details>`;
+  }).join('');
+}
+function studyChapters(blocks){
+  const source=studyMainBlocks(blocks);
+  const chapters=[];
+  let current=null;
+  source.forEach(block=>{
+    const text=cleanPoint(block.text);
+    if(/^\d+\s*장$/.test(text)){
+      current={title:text,blocks:[]};
+      chapters.push(current);
+      return;
+    }
+    if(current)current.blocks.push(block);
+  });
+  return chapters.filter(ch=>ch.blocks.length>2);
 }
 function studyAnswerSnippets(question, blocks){
   const words=studyQuestionKeywords(question);
@@ -744,9 +775,18 @@ function plainCongregationStudy(studyBlocks, primaryPage, pages){
   const points=topPoints(sourceBlocks,7).map(x=>'- '+x).join('\n')||'- 주요점을 찾지 못했습니다.';
   const questions=studyQuestions(primaryPage, studyBlocks);
   const questionListText=questions.slice(0,8).map(q=>'- '+q).join('\n');
-  const questionReport=plainStudyQuestionReport(questions, sourceBlocks);
+  const chapterReport=plainStudyChapterReport(primaryPage, studyBlocks);
+  const questionReport=chapterReport||plainStudyQuestionReport(questions, sourceBlocks);
   const links=(pages||[]).slice(0,4).map(p=>`- [${p.sourceType||'자료'}] ${p.title||p.sourceText||p.url}\n  ${p.url||''}`).join('\n')||'- 후보 자료 없음';
   return `\n[회중 성서 연구]\n이번 연구 범위\n- 교재 표기: ${range}\n- 가져온 원문: ${primaryPage?(primaryPage.title||primaryPage.sourceText||primaryPage.url):'원문 후보 없음'}\n${primaryPage?'- 원문: '+primaryPage.url:''}\n\n핵심 흐름\n${points}${questionListText?'\n\n토의 질문 후보\n'+questionListText:''}${questionReport?'\n\n질문별 예비 해설점\n'+questionReport:''}\n\n확인할 원문 링크\n${links}\n`;
+}
+function plainStudyChapterReport(primaryPage, studyBlocks){
+  const chapters=studyChapters(primaryPage?.blocks||[]);
+  if(!chapters.length)return '';
+  return chapters.map(chapter=>{
+    const questions=uniqueTexts([...extractQuestions(chapter.blocks).slice(0,6), ...chapterEndQuestions()]);
+    return `[${chapter.title}]\n`+plainStudyQuestionReport(questions, chapter.blocks);
+  }).join('\n');
 }
 function plainStudyQuestionReport(questions, blocks){
   if(!questions.length)return '';
