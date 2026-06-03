@@ -59,13 +59,13 @@ p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.lin
 
   <section class="panel mode-panel" data-mode-panel="extra">
     <h2>추가 연구</h2>
-    <p class="muted">JW.org 링크나 텍스트/HTML 파일을 넣어 별도 예습 자료를 만듭니다.</p>
+    <p class="muted">JW.org 링크나 파일을 넣어 별도 예습 자료를 만듭니다.</p>
     <div class="row">
       <input id="extraUrl" placeholder="JW.org 자료 링크">
       <button id="extraFetchBtn">추가 연구 가져오기</button>
     </div>
     <div class="row" style="margin-top:10px">
-      <input id="extraFile" type="file" accept=".txt,.html,.htm,text/plain,text/html">
+      <input id="extraFile" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html">
       <button id="saveExtraBtn" class="ghost">현재 추가 연구 저장</button>
     </div>
   </section>
@@ -239,6 +239,16 @@ async function fetchExtraStudy(url){
 async function loadExtraFile(file){
   if(!file)return;
   switchMode('extra');
+  if(file.type==='application/pdf'||/\.pdf$/i.test(file.name)){
+    showStatus('PDF 본문을 읽는 중입니다...');
+    const data=await buildDataFromPdf(file);
+    currentData=data;
+    currentUrl=data.url;
+    currentExtraId='';
+    renderData(data);
+    showStatus('PDF 내용을 추가 연구로 불러왔습니다. 주요 내용과 해설 질문을 확인해 보세요.');
+    return;
+  }
   const text=await file.text();
   const html=/html?/i.test(file.type)||/\.html?$/i.test(file.name);
   const data=buildDataFromText(file.name,text,html);
@@ -246,7 +256,40 @@ async function loadExtraFile(file){
   currentUrl=data.url;
   currentExtraId='';
   renderData(data);
-  showStatus('파일 내용을 추가 연구로 불러왔습니다. PDF 본문 추출은 다음 단계에서 지원할 예정입니다.');
+  showStatus('파일 내용을 추가 연구로 불러왔습니다.');
+}
+async function buildDataFromPdf(file){
+  const pdfjs=await loadPdfJs();
+  const bytes=await file.arrayBuffer();
+  const pdf=await pdfjs.getDocument({data:bytes}).promise;
+  const blocks=[{type:'h1',text:file.name}];
+  for(let pageNum=1;pageNum<=pdf.numPages&&pageNum<=80;pageNum++){
+    const page=await pdf.getPage(pageNum);
+    const content=await page.getTextContent();
+    const lines=content.items.map(item=>item.str||'').join(' ').replace(/\s+/g,' ').trim();
+    if(lines)blocks.push({type:'p',text:`${pageNum}쪽. ${lines}`});
+  }
+  return {url:'file:'+file.name,title:file.name,blocks,verses:extractVersesFromBlocks(blocks),related:[],relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+}
+async function loadPdfJs(){
+  if(window.pdfjsLib)return window.pdfjsLib;
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  return window.pdfjsLib;
+}
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    const existing=document.querySelector(`script[src="${src}"]`);
+    if(existing){existing.addEventListener('load',resolve,{once:true});resolve();return}
+    const script=document.createElement('script');
+    script.src=src;
+    script.onload=resolve;
+    script.onerror=()=>reject(new Error('PDF 읽기 라이브러리를 불러오지 못했습니다.'));
+    document.head.appendChild(script);
+  });
+}
+function extractVersesFromBlocks(blocks){
+  return Array.from(new Set((blocks||[]).flatMap(b=>Array.from(String(b.text||'').matchAll(/[가-힣]{1,6}\s?\d{1,3}:\d{1,3}(?:-\d{1,3})?/g)).map(x=>x[0])))).slice(0,80);
 }
 function buildDataFromText(name,text,isHtml=false){
   const source=isHtml?text.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,''):escapeHtml(text);
@@ -401,21 +444,57 @@ function isMeetingWorkbook(data){
 function buildGenericReport(data){
   const blocks=data.blocks||[];
   const relatedPages=data.relatedPages||[];
-  const questions=extractQuestions(blocks).slice(0,8);
+  const questions=genericStudyQuestions(blocks);
   const keywords=importantWords(textOf(blocks)).slice(0,12);
   return `
     ${sourceBody(data)}
     <div id="selectedDraftSummary" class="selected-summary"></div>
     ${reportCard('주요 내용 리포트', '본문의 핵심 흐름과 해설에 사용할 만한 주요점을 정리합니다.', [
       guidanceList(['먼저 본문의 흐름을 확인하고, 해설에 쓸 한두 문장 요점을 고릅니다.','관련 링크가 있으면 원문을 열어 근거가 되는 문장을 확인합니다.']),
-      pointList(topPoints(blocks,10)),
+      genericStudyReport(blocks),
       candidatePages('관련 자료 후보', findCandidates(relatedPages,textOf(blocks),keywords), 0)
     ])}
     ${reportCard('해설 준비 질문', '본문에서 찾은 질문이나 직접 생각해 볼 질문을 중심으로 해설 후보를 준비합니다.', [
-      questionList(questions.length?questions:['이 내용은 여호와에 대해 무엇을 알려 주는가?','이 내용을 통해 어떤 실용적인 교훈을 얻을 수 있을까?','배운 내용을 어떻게 적용할 수 있을까?']),
-      questionAnswerCards(questions.length?questions:['이 내용은 여호와에 대해 무엇을 알려 주는가?','이 내용을 통해 어떤 실용적인 교훈을 얻을 수 있을까?','배운 내용을 어떻게 적용할 수 있을까?'], relatedPages, textOf(blocks))
+      questionList(questions),
+      genericQuestionPrepCards(questions, blocks, relatedPages)
     ])}
   `;
+}
+function genericStudyQuestions(blocks){
+  return uniqueTexts([
+    ...extractQuestions(blocks).slice(0,6),
+    '이 내용은 여호와에 대해 무엇을 알려 주는가?',
+    '이 내용을 통해 어떤 실용적인 교훈을 얻을 수 있을까?',
+    '배운 내용을 가정에서, 회중에서, 야외봉사에서 어떻게 적용할 수 있을까?'
+  ]);
+}
+function genericStudyReport(blocks){
+  const points=topPoints(blocks,10);
+  if(!points.length)return '<p class="muted">본문에서 핵심 흐름을 자동으로 찾지 못했습니다.</p>';
+  return `<div class="prep-box"><h4>핵심 흐름</h4>${pointList(points)}</div>
+    <div class="prep-box"><h4>스터디 방향</h4>${pointList(genericStudyDirections(blocks))}</div>`;
+}
+function genericStudyDirections(blocks){
+  const text=textOf(blocks);
+  const directions=[];
+  if(/여호와|하느님/.test(text))directions.push('여호와의 성품, 목적, 사람을 대하시는 방식을 표시해 둡니다.');
+  if(/예수|그리스도/.test(text))directions.push('예수의 태도와 본에서 따라 할 점을 찾습니다.');
+  if(/봉사|전파|증거/.test(text))directions.push('봉사에서 사용할 표현이나 접근 방법으로 바꿀 수 있는 점을 찾습니다.');
+  directions.push('해설은 본문 근거 한 문장과 개인 적용 한 문장으로 준비합니다.');
+  return directions;
+}
+function genericQuestionPrepCards(questions, blocks, relatedPages){
+  return questions.map(q=>{
+    const snippets=studyAnswerSnippets(q,blocks).slice(0,5);
+    const linkCandidates=findAnswerCandidates(q,relatedPages,textOf(blocks)).slice(0,2);
+    const linkPart=linkCandidates.length?'<h4>관련 링크 후보</h4>'+linkCandidates.map(c=>`
+      <details class="candidate">
+        <summary>${escapeHtml(c.title||c.sourceText||c.url)}</summary>
+        <p class="small muted"><a href="${escapeAttr(c.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
+        ${pointList(c.snippets.slice(0,3))}
+      </details>`).join(''):'';
+    return questionPrepCard(q,snippets,'추가연구')+linkPart;
+  }).join('');
 }
 
 function getSectionBlocks(data,key,starts,ends){
