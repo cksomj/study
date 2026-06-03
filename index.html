@@ -55,8 +55,8 @@ p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.lin
   </section>
 
   <section class="hero">
-    <p class="tag">생활과 봉사 예습 리포트</p>
-    <h1>생활과 봉사 예습 앱</h1>
+    <p class="tag" id="heroTag">생활과 봉사 예습 리포트</p>
+    <h1 id="heroTitle">생활과 봉사 예습 앱</h1>
   </section>
 
   <input id="workerUrl" type="hidden">
@@ -166,6 +166,8 @@ const workerUrl=$('workerUrl');
 const homeScreen=$('homeScreen');
 const workspace=$('workspace');
 const workspaceTitle=$('workspaceTitle');
+const heroTag=$('heroTag');
+const heroTitle=$('heroTitle');
 const homeWeeklyBtn=$('homeWeeklyBtn');
 const homePersonalBtn=$('homePersonalBtn');
 const homeBackBtn=$('homeBackBtn');
@@ -258,6 +260,8 @@ function switchMode(mode){
   document.querySelectorAll('[data-mode]').forEach(btn=>btn.classList.toggle('on',btn.dataset.mode===mode));
   document.querySelectorAll('[data-mode-panel]').forEach(panel=>panel.classList.toggle('on',panel.dataset.modePanel===mode));
   document.querySelectorAll('[data-scope]').forEach(panel=>panel.classList.toggle('scope-hidden',panel.dataset.scope!==mode));
+  heroTag.textContent=mode==='extra'?'개인 연구 리포트':'생활과 봉사 예습 리포트';
+  heroTitle.textContent=mode==='extra'?'개인 연구 프로젝트':'생활과 봉사 예습 앱';
   updateSaveLabels();
 }
 function updateSaveLabels(){
