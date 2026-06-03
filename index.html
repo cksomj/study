@@ -19,7 +19,7 @@ button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;
 .card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}.report-card{padding:14px}.report-card>summary{font-size:18px}.report-body{padding-top:10px}.report-actions{display:flex;justify-content:flex-end;margin:0 0 10px}.report-actions button{white-space:nowrap;padding:9px 10px}.source-body{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}.source-body h3{margin-top:0}.source-body .content-preview{max-height:430px;overflow:auto;border-top:1px solid var(--line);padding-top:10px}.prep-box,.study-range{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.prep-box h4,.study-range h4{margin:0 0 8px}.prep-box ul{margin:0;padding-left:20px}.study-range p{margin:4px 0}.tag{display:inline-block;background:var(--soft);color:#2f5e50;border-radius:999px;padding:6px 9px;margin:3px;font-weight:800;font-size:12px}
 .warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
-.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.mode-tabs button{background:white;color:var(--brand);border:1px solid var(--line)}.mode-tabs button.on{background:var(--brand);color:white}.mode-panel{display:none}.mode-panel.on{display:block}.scope-hidden{display:none}
+.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.mode-tabs button{background:white;color:var(--brand);border:1px solid var(--line)}.mode-tabs button.on{background:var(--brand);color:white}.mode-panel{display:none}.mode-panel.on{display:block}.scope-hidden,.view-hidden{display:none!important}.project-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.project-actions button{min-height:52px}.project-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.project-list .card{margin:0}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
 .search-box{background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}.search-box .row{align-items:stretch}.search-result mark{background:#fff0a6;border-radius:4px;padding:0 2px}.search-result .card button{margin:4px 0 6px}.section{display:none}.section.on{display:block}.report-nav{display:flex;gap:8px;flex-wrap:wrap;background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:10px;margin:0 0 14px}.report-nav a{background:white;border:1px solid var(--line);border-radius:999px;color:var(--brand);font-weight:800;padding:8px 10px;text-decoration:none}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.question-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.question-tools button{padding:9px 10px}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft summary{font-weight:900}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
@@ -68,7 +68,7 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
 
   <input id="workerUrl" type="hidden">
 
-  <div class="mode-tabs">
+  <div class="mode-tabs" id="modeTabs">
     <button class="on" data-mode="weekly">주간 교재</button>
     <button data-mode="extra">추가 연구</button>
   </div>
@@ -88,23 +88,34 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
     </div>
   </section>
 
-  <section class="panel mode-panel" data-mode-panel="extra">
-    <h2>추가 연구</h2>
-    <p class="muted">새 연구 프로젝트를 만들고, JW.org 링크나 파일을 넣어 별도 예습 자료를 만듭니다.</p>
+  <section class="panel mode-panel" data-mode-panel="extra" id="personalDashboard">
+    <h2>개인 연구 프로젝트</h2>
+    <p class="muted">PDF나 JW.org 링크마다 하나의 연구 프로젝트로 저장합니다. 새 PDF를 공부할 때마다 새 연구를 만들고, 본문 분석과 관련 자료 찾기, 질문 해설 준비를 진행합니다.</p>
+    <div class="project-actions">
+      <button id="personalNewBtn" class="secondary">새 연구 만들기</button>
+    </div>
+    <h3>개인연구 리스트</h3>
+    <div id="personalProjectList" class="project-list linkList"></div>
+  </section>
+
+  <section class="panel view-hidden" id="extraEditorPanel">
+    <h2>연구 자료 입력</h2>
+    <p class="muted">현재 프로젝트에 사용할 PDF 파일을 첨부하거나 JW.org 링크를 넣어 본문과 관련 자료를 가져옵니다.</p>
     <div class="row">
       <input id="extraUrl" placeholder="JW.org 자료 링크">
-      <button id="extraFetchBtn">추가 연구 가져오기</button>
+      <button id="extraFetchBtn">연구 자료 가져오기</button>
     </div>
     <div class="row" style="margin-top:10px">
       <input id="extraFile" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html">
-      <button id="newExtraBtn" class="secondary">새 연구 프로젝트</button>
-      <button id="saveExtraBtn" class="ghost">현재 추가 연구 저장</button>
+      <button id="newExtraBtn" class="secondary">다른 새 연구 만들기</button>
+      <button id="saveExtraBtn" class="ghost">현재 연구 저장</button>
+      <button id="personalListBtn" class="ghost">개인연구 리스트</button>
     </div>
   </section>
 
   <p id="status" class="warn" style="display:none"></p>
 
-  <section class="grid">
+  <section class="grid" id="studyGrid">
     <aside>
       <section class="panel" data-scope="weekly">
         <h2>가져온 자료</h2>
@@ -176,6 +187,13 @@ const workspace=$('workspace');
 const workspaceTitle=$('workspaceTitle');
 const heroTag=$('heroTag');
 const heroTitle=$('heroTitle');
+const modeTabs=$('modeTabs');
+const studyGrid=$('studyGrid');
+const personalDashboard=$('personalDashboard');
+const personalProjectList=$('personalProjectList');
+const personalNewBtn=$('personalNewBtn');
+const personalListBtn=$('personalListBtn');
+const extraEditorPanel=$('extraEditorPanel');
 const loginPass=$('loginPass');
 const loginBtn=$('loginBtn');
 const loginMessage=$('loginMessage');
@@ -241,6 +259,8 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.onclick=()=>switchMode
 
 extraFetchBtn.onclick=async()=>{try{await fetchExtraStudy(extraUrl.value.trim())}catch(e){showStatus(e.message)}};
 extraFile.onchange=async()=>{try{await loadExtraFile(extraFile.files?.[0])}catch(e){showStatus(e.message)}};
+personalNewBtn.onclick=()=>newExtraProject();
+personalListBtn.onclick=()=>showPersonalDashboard();
 newExtraBtn.onclick=()=>newExtraProject();
 saveExtraBtn.onclick=()=>saveCurrentExtraStudy();
 
@@ -327,7 +347,7 @@ function enterWorkspace(mode){
   if(mode==='weekly')autoFetchWeeklyIfNeeded();
   if(mode==='extra'){
     renderExtraList();
-    if(!currentData||isMeetingWorkbook(currentData))newExtraProject();
+    showPersonalDashboard();
   }
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -339,20 +359,41 @@ function showHome(){
 }
 function switchMode(mode){
   currentMode=mode;
+  modeTabs.classList.toggle('view-hidden',mode==='extra');
   document.querySelectorAll('[data-mode]').forEach(btn=>btn.classList.toggle('on',btn.dataset.mode===mode));
   document.querySelectorAll('[data-mode-panel]').forEach(panel=>panel.classList.toggle('on',panel.dataset.modePanel===mode));
   document.querySelectorAll('[data-scope]').forEach(panel=>panel.classList.toggle('scope-hidden',panel.dataset.scope!==mode));
   heroTag.textContent=mode==='extra'?'개인 연구 리포트':'생활과 봉사 예습 리포트';
   heroTitle.textContent=mode==='extra'?'개인 연구 프로젝트':'생활과 봉사 예습 앱';
+  if(mode==='weekly'){
+    studyGrid.classList.remove('view-hidden');
+    extraEditorPanel.classList.add('view-hidden');
+  }
   updateSaveLabels();
+}
+function showPersonalDashboard(){
+  switchMode('extra');
+  personalDashboard.classList.add('on');
+  extraEditorPanel.classList.add('view-hidden');
+  studyGrid.classList.add('view-hidden');
+  currentExtraId='';
+  renderExtraList();
+  hideStatus();
+}
+function showPersonalEditor(){
+  switchMode('extra');
+  personalDashboard.classList.remove('on');
+  extraEditorPanel.classList.remove('view-hidden');
+  studyGrid.classList.remove('view-hidden');
+  renderExtraList();
 }
 function updateSaveLabels(){
   const isExtra=currentMode==='extra'||(currentData&&!isMeetingWorkbook(currentData));
-  saveReportBtn.textContent=isExtra?'추가 연구 리포트 저장':'리포트+메모 저장';
-  saveExtraBtn.textContent=currentExtraId?'현재 추가 연구 다시 저장':'현재 추가 연구 저장';
+  saveReportBtn.textContent=isExtra?'개인 연구 리포트 저장':'리포트+메모 저장';
+  saveExtraBtn.textContent=currentExtraId?'현재 연구 다시 저장':'현재 연구 저장';
 }
 function newExtraProject(){
-  switchMode('extra');
+  showPersonalEditor();
   currentExtraId='';
   currentData=null;
   currentUrl='';
@@ -361,7 +402,7 @@ function newExtraProject(){
   resultTitle.textContent='새 연구 프로젝트';
   sourceUrl.textContent='';
   verses.innerHTML='';
-  report.innerHTML='<p class="muted">JW.org 링크를 넣거나 파일을 첨부하면 주요 내용 리포트와 해설 준비 질문을 만듭니다.</p>';
+  report.innerHTML='<p class="muted">PDF 파일을 첨부하거나 JW.org 링크를 넣으면 주요 내용 리포트와 해설 준비 질문을 만듭니다.</p>';
   contentTab.innerHTML='';
   linksTab.innerHTML='';
   relatedTab.innerHTML='';
@@ -413,17 +454,17 @@ async function fetchFromWorker(url, deep=true){
   }
 }
 async function fetchExtraStudy(url){
-  if(!url){showStatus('추가 연구로 가져올 JW.org 링크를 입력하세요.');return}
+  if(!url){showStatus('개인 연구로 가져올 JW.org 링크를 입력하세요.');return}
   if(!/^https:\/\/www\.jw\.org\/ko\//.test(url)){showStatus('JW.org 한국어 링크만 사용할 수 있습니다.');return}
-  switchMode('extra');
+  showPersonalEditor();
   await fetchFromWorker(url,true);
   currentMode='extra';
   currentExtraId='';
-  showStatus('추가 연구 자료를 가져왔습니다. 필요하면 저장하세요.');
+  showStatus('개인 연구 자료를 가져왔습니다. 필요하면 저장하세요.');
 }
 async function loadExtraFile(file){
   if(!file)return;
-  switchMode('extra');
+  showPersonalEditor();
   if(file.type==='application/pdf'||/\.pdf$/i.test(file.name)){
     showStatus('PDF 본문을 읽는 중입니다...');
     const data=await buildDataFromPdf(file);
@@ -565,7 +606,7 @@ function saveCurrentExtraStudy(){
   cleanupExtraDuplicates(id,record.identity);
   renderExtraList();
   updateSaveLabels();
-  showStatus(existingId?'기존 추가 연구를 갱신했습니다.':'추가 연구를 저장했습니다.');
+  showStatus(existingId?'기존 개인 연구 프로젝트를 갱신했습니다.':'개인 연구 프로젝트를 저장했습니다.');
 }
 async function fetchWeeklyMeeting(manual=false){
   if(isFetching)return;
@@ -1309,14 +1350,16 @@ function renderExtraList(){
   duplicateKeys.forEach(k=>localStorage.removeItem(k));
   const items=[...byIdentity.values()];
   items.sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||'')));
-  extraList.innerHTML=items.map(item=>`
+  const html=items.map(item=>`
     <div class="card">
-      <b>${escapeHtml(item.title||'추가 연구')}</b>
+      <b>${escapeHtml(item.title||'개인 연구')}</b>
       <p class="small muted">${escapeHtml(formatSavedAt(item.savedAt))}</p>
       <button class="ghost" onclick="loadExtraStudy('${escapeAttr(item.id)}')">열기</button>
       <button class="ghost" onclick="copyExtraStudy('${escapeAttr(item.id)}')">복사</button>
       <button class="ghost" onclick="deleteExtraStudy('${escapeAttr(item.id)}')">삭제</button>
-    </div>`).join('')||'<p class="muted">저장된 추가 연구가 없습니다.</p>';
+    </div>`).join('')||'<p class="muted">저장된 개인 연구 프로젝트가 없습니다. 새 연구 만들기를 눌러 시작하세요.</p>';
+  extraList.innerHTML=html;
+  personalProjectList.innerHTML=html;
 }
 window.loadExtraStudy=id=>{
   const raw=localStorage.getItem(extraKey(id));
@@ -1324,16 +1367,22 @@ window.loadExtraStudy=id=>{
   const record=JSON.parse(raw);
   currentExtraId=id;
   currentMode='extra';
-  switchMode('extra');
+  showPersonalEditor();
   renderData(record.data);
   memo.value=record.memo||'';
   updateSaveLabels();
-  showStatus('추가 연구를 불러왔습니다.');
+  showStatus('개인 연구 프로젝트를 불러왔습니다.');
 }
 window.deleteExtraStudy=id=>{
   localStorage.removeItem(extraKey(id));
+  if(currentExtraId===id){
+    currentExtraId='';
+    currentData=null;
+    currentUrl='';
+    showPersonalDashboard();
+  }
   renderExtraList();
-  showStatus('추가 연구를 삭제했습니다.');
+  showStatus('개인 연구 프로젝트를 삭제했습니다.');
 }
 window.copyExtraStudy=async id=>{
   const raw=localStorage.getItem(extraKey(id));
@@ -1341,7 +1390,7 @@ window.copyExtraStudy=async id=>{
   const record=JSON.parse(raw);
   try{
     await copyText(record.report||buildGenericPlainReport(record.data));
-    showStatus('추가 연구 리포트를 복사했습니다.');
+    showStatus('개인 연구 리포트를 복사했습니다.');
   }catch(e){showStatus(e.message)}
 }
 window.loadSavedReport=encoded=>{
