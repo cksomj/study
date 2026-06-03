@@ -652,11 +652,10 @@ copyWranglerBtn.onclick=async()=>{
 reportBtn.onclick=()=>{if(currentData){report.innerHTML=buildReport(currentData);hydrateDraftInputs()}else showStatus('먼저 자료를 가져오세요.')}
 copyReportBtn.onclick=async()=>{
   if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
-  const draftText=draftSummaryText();
-  const text=buildPlainReport(currentData)+(draftText?'\n\n[내 해설 초안]\n'+draftText:'');
+  const text=fullReportText(currentData);
   try{
     await navigator.clipboard.writeText(text);
-    showStatus('예습 리포트를 클립보드에 복사했습니다.');
+    showStatus('예습 리포트와 메모를 클립보드에 복사했습니다.');
   }catch(e){
     memo.value=(memo.value?memo.value+'\n\n':'')+text;
     showStatus('클립보드 복사가 막혀 리포트를 메모 칸에 넣었습니다.');
@@ -664,8 +663,7 @@ copyReportBtn.onclick=async()=>{
 }
 saveReportBtn.onclick=()=>{
   if(!currentData||!currentUrl){showStatus('먼저 자료를 가져오세요.');return}
-  const draftText=draftSummaryText();
-  const reportText=buildPlainReport(currentData)+(draftText?'\n\n[내 해설 초안]\n'+draftText:'');
+  const reportText=fullReportText(currentData);
   const record={savedAt:new Date().toISOString(),url:currentUrl,title:currentData.title||'',report:reportText,memo:memo.value,drafts:readDrafts()};
   localStorage.setItem(reportKey(currentUrl),JSON.stringify(record));
   renderReportList();
@@ -818,6 +816,13 @@ function draftSummaryText(url=currentUrl){
     if(d.draft)lines.push('- 내 해설: '+d.draft);
   });
   return lines.join('\n');
+}
+function fullReportText(data){
+  const draftText=draftSummaryText();
+  const memoText=(memo.value||'').trim();
+  return buildPlainReport(data)
+    +(draftText?'\n\n[내 해설 초안]\n'+draftText:'')
+    +(memoText?'\n\n[나의 메모]\n'+memoText:'');
 }
 async function copyText(text){
   try{
