@@ -834,12 +834,7 @@ function relatedFetchBox(data){
   </div>`;
 }
 function genericStudyQuestions(blocks){
-  return uniqueTexts([
-    ...extractQuestions(blocks).slice(0,6),
-    '이 내용은 여호와에 대해 무엇을 알려 주는가?',
-    '이 내용을 통해 어떤 실용적인 교훈을 얻을 수 있을까?',
-    '배운 내용을 가정에서, 회중에서, 야외봉사에서 어떻게 적용할 수 있을까?'
-  ]);
+  return uniqueTexts(extractQuestions(blocks).slice(0,8));
 }
 function genericStudyReport(blocks){
   const points=topPoints(blocks,10);
