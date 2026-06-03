@@ -498,13 +498,75 @@ async function buildDataFromPdf(file){
   const bytes=await file.arrayBuffer();
   const pdf=await pdfjs.getDocument({data:bytes}).promise;
   const blocks=[{type:'h1',text:file.name}];
+  const warnings=[];
   for(let pageNum=1;pageNum<=pdf.numPages&&pageNum<=80;pageNum++){
     const page=await pdf.getPage(pageNum);
-    const content=await page.getTextContent();
-    const lines=content.items.map(item=>item.str||'').join(' ').replace(/\s+/g,' ').trim();
+    const content=await page.getTextContent({normalizeWhitespace:true,disableCombineTextItems:false});
+    const lines=cleanPdfText(pdfPageText(content.items||[]));
     if(lines)blocks.push({type:'p',text:`${pageNum}쪽. ${lines}`});
+    if(isPoorPdfText(lines))warnings.push(pageNum);
   }
+  if(warnings.length)blocks.splice(1,0,{type:'p',text:`PDF 텍스트 추출 경고: ${warnings.slice(0,8).join(', ')}쪽에서 글자 인코딩이 깨졌을 수 있습니다. 원본 PDF에서 복사한 글자도 깨진다면 OCR 처리가 필요합니다.`});
   return {url:'file:'+file.name,title:file.name,blocks,verses:extractVersesFromBlocks(blocks),related:extractJwLinksFromText(textOf(blocks)),relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+}
+function pdfPageText(items){
+  const rows=[];
+  for(const item of items){
+    const raw=String(item.str||'');
+    if(!raw.trim())continue;
+    const t=item.transform||[1,0,0,1,0,0];
+    const x=Number(t[4]||0);
+    const y=Number(t[5]||0);
+    const width=Number(item.width||raw.length*5);
+    let row=rows.find(line=>Math.abs(line.y-y)<3);
+    if(!row){row={y,items:[]};rows.push(row)}
+    row.items.push({x,width,text:raw});
+  }
+  rows.sort((a,b)=>b.y-a.y);
+  return rows.map(row=>{
+    row.items.sort((a,b)=>a.x-b.x);
+    let out='';
+    let lastRight=null;
+    for(const item of row.items){
+      const gap=lastRight===null?0:item.x-lastRight;
+      if(out&&gap>Math.max(2,item.width/Math.max(1,item.text.length))*0.65)out+=' ';
+      out+=item.text;
+      lastRight=item.x+item.width;
+    }
+    return out.trim();
+  }).filter(Boolean).join('\n');
+}
+function cleanPdfText(text){
+  let value=repairUtf8Mojibake(String(text||'')).normalize('NFC');
+  value=value
+    .replace(/\(cid:\d+\)/g,' ')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,' ')
+    .replace(/[ \t]+\n/g,'\n')
+    .replace(/\n{3,}/g,'\n\n')
+    .replace(/[ \t]{2,}/g,' ')
+    .trim();
+  value=value.replace(/(?:[가-힣]\s+){2,}[가-힣]/g,match=>match.replace(/\s+/g,''));
+  return value.replace(/\s*\n\s*/g,' ').replace(/\s{2,}/g,' ').trim();
+}
+function repairUtf8Mojibake(text){
+  if(!/[ÃÂÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜÝÞßà-ÿ]/.test(text))return text;
+  try{
+    const bytes=Uint8Array.from(Array.from(text).map(ch=>ch.charCodeAt(0)&255));
+    const decoded=new TextDecoder('utf-8',{fatal:false}).decode(bytes);
+    const decodedKorean=(decoded.match(/[가-힣]/g)||[]).length;
+    const originalKorean=(text.match(/[가-힣]/g)||[]).length;
+    return decodedKorean>originalKorean?decoded:text;
+  }catch(e){
+    return text;
+  }
+}
+function isPoorPdfText(text){
+  const value=String(text||'');
+  if(!value)return false;
+  if(/\(cid:\d+\)|�{2,}/.test(value))return true;
+  const korean=(value.match(/[가-힣]/g)||[]).length;
+  const latinNoise=(value.match(/[ÃÂÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜÝÞßà-ÿ]/g)||[]).length;
+  return latinNoise>8&&latinNoise>korean;
 }
 async function loadPdfJs(){
   if(window.pdfjsLib)return window.pdfjsLib;
