@@ -1210,6 +1210,7 @@ async function copyText(text){
   }
 }
 function buildPlainReport(data){
+  if(!isMeetingWorkbook(data))return buildGenericPlainReport(data);
   const sections=data.sections||{};
   const relatedPages=data.relatedPages||[];
   const blocks=data.blocks||[];
@@ -1236,6 +1237,43 @@ function buildPlainReport(data){
     plainCongregationStudy(study, studyPage, studyPages)
   ];
   return parts.filter(Boolean).join('\n');
+}
+function buildGenericPlainReport(data){
+  const blocks=data.blocks||[];
+  const relatedPages=data.relatedPages||[];
+  const questions=genericStudyQuestions(blocks);
+  const keywords=importantWords(textOf(blocks)).slice(0,12);
+  const points=topPoints(blocks,10).map(x=>'- '+x).join('\n')||'- 본문에서 자동 요점을 찾지 못했습니다.';
+  const directions=genericStudyDirections(blocks).map(x=>'- '+x).join('\n');
+  const related=findCandidates(relatedPages,textOf(blocks),keywords).slice(0,5).map(page=>{
+    const snippets=pageSnippets(page).slice(0,3).map(x=>'  · '+x).join('\n');
+    return `- [${page.sourceType||'자료'}] ${page.title||page.sourceText||page.url}\n  ${page.url||''}${snippets?'\n'+snippets:''}`;
+  }).join('\n')||'- 관련 자료 후보 없음';
+  const answers=questions.map(q=>{
+    const bodySnippets=studyAnswerSnippets(q,blocks).slice(0,3).map(x=>'  - '+x).join('\n')||'  - 본문 근거 후보 없음';
+    const linkSnippets=findAnswerCandidates(q,relatedPages,textOf(blocks)).slice(0,2).map(c=>{
+      const snippets=c.snippets.slice(0,2).map(x=>'    · '+x).join('\n');
+      return `  - [${c.sourceType||'자료'}] ${c.title||c.sourceText||c.url}\n    ${c.url||''}${snippets?'\n'+snippets:''}`;
+    }).join('\n');
+    return `- ${q}\n본문 근거 후보\n${bodySnippets}${linkSnippets?'\n관련 링크 후보\n'+linkSnippets:''}`;
+  }).join('\n');
+  return [
+    '추가 연구 리포트',
+    '자료: '+(data.title||''),
+    '원문: '+(data.url||''),
+    '',
+    '[주요 내용]',
+    points,
+    '',
+    '[스터디 방향]',
+    directions,
+    '',
+    '[해설 질문과 예비 해설점]',
+    answers,
+    '',
+    '[관련 자료]',
+    related
+  ].filter(Boolean).join('\n');
 }
 function plainSection(title, blocks, relatedPages, keywords, questions=[]){
   const points=topPoints(blocks,6).map(x=>'- '+x).join('\n')||'- 본문에서 자동 요점을 찾지 못했습니다.';
