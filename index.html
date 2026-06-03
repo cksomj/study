@@ -199,6 +199,12 @@ function switchMode(mode){
   currentMode=mode;
   document.querySelectorAll('[data-mode]').forEach(btn=>btn.classList.toggle('on',btn.dataset.mode===mode));
   document.querySelectorAll('[data-mode-panel]').forEach(panel=>panel.classList.toggle('on',panel.dataset.modePanel===mode));
+  updateSaveLabels();
+}
+function updateSaveLabels(){
+  const isExtra=currentMode==='extra'||(currentData&&!isMeetingWorkbook(currentData));
+  saveReportBtn.textContent=isExtra?'추가 연구 리포트 저장':'리포트+메모 저장';
+  saveExtraBtn.textContent=currentExtraId?'현재 추가 연구 다시 저장':'현재 추가 연구 저장';
 }
 
 async function fetchFromWorker(url, deep=true){
@@ -333,9 +339,10 @@ function saveCurrentExtraStudy(){
   if(!currentData){showStatus('저장할 추가 연구 자료가 없습니다.');return}
   const id=currentExtraId||String(Date.now());
   currentExtraId=id;
-  const record={id,savedAt:new Date().toISOString(),title:currentData.title||'추가 연구',data:currentData,memo:memo.value};
+  const record={id,savedAt:new Date().toISOString(),title:currentData.title||'추가 연구',data:currentData,memo:memo.value,report:fullReportText(currentData)};
   localStorage.setItem(extraKey(id),JSON.stringify(record));
   renderExtraList();
+  updateSaveLabels();
   showStatus('추가 연구를 저장했습니다.');
 }
 async function fetchWeeklyMeeting(manual=false){
@@ -395,6 +402,7 @@ function renderData(data){
   hydrateDraftInputs();
   memo.value=localStorage.getItem(memoKey(currentUrl))||'';
   memoState.textContent=currentUrl?'메모 저장 기준: '+currentUrl:'';
+  updateSaveLabels();
 }
 
 function buildReport(data){
@@ -990,6 +998,10 @@ copyReportBtn.onclick=async()=>{
 }
 saveReportBtn.onclick=()=>{
   if(!currentData||!currentUrl){showStatus('먼저 자료를 가져오세요.');return}
+  if(currentMode==='extra'||!isMeetingWorkbook(currentData)){
+    saveCurrentExtraStudy();
+    return;
+  }
   const reportText=fullReportText(currentData);
   const record={savedAt:new Date().toISOString(),url:currentUrl,title:currentData.title||'',report:reportText,memo:memo.value,drafts:readDrafts()};
   localStorage.setItem(reportKey(currentUrl),JSON.stringify(record));
@@ -1055,6 +1067,7 @@ function renderExtraList(){
       <b>${escapeHtml(item.title||'추가 연구')}</b>
       <p class="small muted">${escapeHtml(formatSavedAt(item.savedAt))}</p>
       <button class="ghost" onclick="loadExtraStudy('${escapeAttr(item.id)}')">열기</button>
+      <button class="ghost" onclick="copyExtraStudy('${escapeAttr(item.id)}')">복사</button>
       <button class="ghost" onclick="deleteExtraStudy('${escapeAttr(item.id)}')">삭제</button>
     </div>`).join('')||'<p class="muted">저장된 추가 연구가 없습니다.</p>';
 }
@@ -1067,12 +1080,22 @@ window.loadExtraStudy=id=>{
   switchMode('extra');
   renderData(record.data);
   memo.value=record.memo||'';
+  updateSaveLabels();
   showStatus('추가 연구를 불러왔습니다.');
 }
 window.deleteExtraStudy=id=>{
   localStorage.removeItem(extraKey(id));
   renderExtraList();
   showStatus('추가 연구를 삭제했습니다.');
+}
+window.copyExtraStudy=async id=>{
+  const raw=localStorage.getItem(extraKey(id));
+  if(!raw){showStatus('추가 연구를 찾지 못했습니다.');return}
+  const record=JSON.parse(raw);
+  try{
+    await copyText(record.report||buildGenericPlainReport(record.data));
+    showStatus('추가 연구 리포트를 복사했습니다.');
+  }catch(e){showStatus(e.message)}
 }
 window.loadSavedReport=encoded=>{
   const url=decodeURIComponent(encoded);
