@@ -707,6 +707,18 @@ function renderSaved(){
   savedList.innerHTML=items.map(x=>`<a href="#" onclick="loadSaved('${encodeURIComponent(x.url)}');return false;"><b>${escapeHtml(x.title)}</b><br><span class="small muted">${escapeHtml(x.url)}</span></a>`).join('')||'<p class="muted">아직 저장된 자료가 없습니다.</p>';
 }
 window.loadSaved=encoded=>{const url=decodeURIComponent(encoded);const raw=localStorage.getItem(key(url));if(raw){currentUrl=url;renderData(JSON.parse(raw))}}
+function restoreLastStudy(){
+  const url=localStorage.getItem('lastJwPageUrl')||'';
+  if(!url)return;
+  const raw=localStorage.getItem(key(url));
+  if(!raw)return;
+  try{
+    currentUrl=url;
+    pageUrl.value=url;
+    renderData(JSON.parse(raw));
+    showStatus('마지막으로 가져온 자료를 다시 열었습니다.');
+  }catch(e){}
+}
 function renderReportList(){
   const items=[];
   for(let i=0;i<localStorage.length;i++){
@@ -935,6 +947,7 @@ function plainStudyQuestionReport(questions, blocks){
 }
 renderSaved();
 renderReportList();
+restoreLastStudy();
 document.documentElement.dataset.studyReady='1';
 })();
 </script>
