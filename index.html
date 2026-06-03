@@ -19,7 +19,7 @@ button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;
 .card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}.report-card{padding:14px}.report-card>summary{font-size:18px}.report-body{padding-top:10px}.report-actions{display:flex;justify-content:flex-end;margin:0 0 10px}.report-actions button{white-space:nowrap;padding:9px 10px}.source-body{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}.source-body h3{margin-top:0}.source-body .content-preview{max-height:430px;overflow:auto;border-top:1px solid var(--line);padding-top:10px}.prep-box,.study-range{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.prep-box h4,.study-range h4{margin:0 0 8px}.prep-box ul{margin:0;padding-left:20px}.study-range p{margin:4px 0}.tag{display:inline-block;background:var(--soft);color:#2f5e50;border-radius:999px;padding:6px 9px;margin:3px;font-weight:800;font-size:12px}
 .warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
-.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.mode-tabs button{background:white;color:var(--brand);border:1px solid var(--line)}.mode-tabs button.on{background:var(--brand);color:white}.mode-panel{display:none}.mode-panel.on{display:block}
+.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.mode-tabs button{background:white;color:var(--brand);border:1px solid var(--line)}.mode-tabs button.on{background:var(--brand);color:white}.mode-panel{display:none}.mode-panel.on{display:block}.scope-hidden{display:none}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
 .search-box{background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}.search-box .row{align-items:stretch}.search-result mark{background:#fff0a6;border-radius:4px;padding:0 2px}.search-result .card button{margin:4px 0 6px}.section{display:none}.section.on{display:block}.report-nav{display:flex;gap:8px;flex-wrap:wrap;background:#f8fbf9;border:1px solid var(--line);border-radius:14px;padding:10px;margin:0 0 14px}.report-nav a{background:white;border:1px solid var(--line);border-radius:999px;color:var(--brand);font-weight:800;padding:8px 10px;text-decoration:none}.candidate{border-left:5px solid var(--brand)}.question{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;font-weight:800}.question-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.question-tools button{padding:9px 10px}.selected-summary{background:#edf4ef;border:1px solid #cbdcd2;border-radius:14px;padding:14px;margin:0 0 14px}.selected-summary h3{margin:0 0 8px}.selected-summary .empty{color:var(--muted);margin:0}.summary-item{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.summary-item b{display:block;margin-bottom:5px}.question-card.selected{border-color:var(--brand);box-shadow:0 0 0 2px #506f6220}.pick-row{display:flex;align-items:center;gap:8px;background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 10px;font-weight:800}.pick-row input{width:auto}.answer-draft{background:#fffefb;border:1px dashed #d7c8b5;border-radius:12px;padding:12px;margin-top:10px}.answer-draft summary{font-weight:900}.answer-draft label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:8px 0 4px}.answer-draft input,.answer-draft textarea{font-size:14px;padding:10px}.answer-draft textarea{min-height:86px}.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 details{background:white;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}summary{cursor:pointer;font-weight:800;line-height:1.45}.report details:not([open]){background:#fffefb}.report h4{margin:16px 0 8px}
@@ -79,7 +79,6 @@ p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.lin
       <button class="ghost" id="copyReportBtn">리포트 복사</button>
       <button class="ghost" id="saveReportBtn">리포트+메모 저장</button>
     </div>
-    <p id="status" class="warn" style="display:none"></p>
   </section>
 
   <section class="panel mode-panel" data-mode-panel="extra">
@@ -96,17 +95,19 @@ p,li,b,summary,a,.question,.card{overflow-wrap:anywhere}.report,#contentTab,.lin
     </div>
   </section>
 
+  <p id="status" class="warn" style="display:none"></p>
+
   <section class="grid">
     <aside>
-      <section class="panel">
+      <section class="panel" data-scope="weekly">
         <h2>가져온 자료</h2>
         <div id="savedList" class="linkList"></div>
       </section>
-      <section class="panel">
+      <section class="panel" data-scope="weekly">
         <h2>저장된 리포트</h2>
         <div id="reportList" class="linkList"></div>
       </section>
-      <section class="panel">
+      <section class="panel" data-scope="extra">
         <h2>추가 연구 목록</h2>
         <div id="extraList" class="linkList"></div>
       </section>
@@ -241,7 +242,10 @@ function enterWorkspace(mode){
   switchMode(mode);
   workspaceTitle.textContent=mode==='extra'?'개인연구':'주간집회예습';
   if(mode==='weekly')autoFetchWeeklyIfNeeded();
-  if(mode==='extra')renderExtraList();
+  if(mode==='extra'){
+    renderExtraList();
+    if(!currentData||isMeetingWorkbook(currentData))newExtraProject();
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function showHome(){
@@ -253,6 +257,7 @@ function switchMode(mode){
   currentMode=mode;
   document.querySelectorAll('[data-mode]').forEach(btn=>btn.classList.toggle('on',btn.dataset.mode===mode));
   document.querySelectorAll('[data-mode-panel]').forEach(panel=>panel.classList.toggle('on',panel.dataset.modePanel===mode));
+  document.querySelectorAll('[data-scope]').forEach(panel=>panel.classList.toggle('scope-hidden',panel.dataset.scope!==mode));
   updateSaveLabels();
 }
 function updateSaveLabels(){
@@ -274,6 +279,7 @@ function newExtraProject(){
   contentTab.innerHTML='';
   linksTab.innerHTML='';
   relatedTab.innerHTML='';
+  searchInput.value='';
   searchResults.innerHTML='';
   memo.value='';
   memoState.textContent='새 연구 프로젝트';
