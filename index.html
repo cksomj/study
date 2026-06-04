@@ -1218,7 +1218,7 @@ function pageSnippets(page){
 }
 function importantWords(text){
   return [...new Set(String(text||'').match(/[가-힣A-Za-z0-9]{2,}/g)||[])]
-    .filter(w=>!/^(그리고|하지만|우리|여러분|무엇|어떻게|주간|자료|관련|링크|동영상|보여|답을|적는|있습니까|합니다)$/.test(w))
+    .filter(w=>!/^(그리고|하지만|우리|여러분|무엇|어떻게|주간|자료|관련|링크|동영상|보여|답을|적는|있습니까|합니다|말라|하지|하게|해서|위해|대한|에서)$/.test(w))
     .slice(0,30);
 }
 function questionKeywords(text){
