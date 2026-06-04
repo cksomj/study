@@ -415,6 +415,7 @@ function newExtraProject(){
   currentExtraId='';
   currentData=null;
   currentUrl='';
+  clearSearchState();
   extraUrl.value='';
   extraFile.value='';
   resultTitle.textContent='새 연구 프로젝트';
@@ -449,6 +450,7 @@ async function fetchFromWorker(url, deep=true){
   url=canonicalUrl(url);
   if(!w){showStatus('먼저 Cloudflare Worker 주소를 입력하세요. 저장소의 worker.js를 Cloudflare Worker에 배포한 뒤 그 주소를 넣어야 합니다.');return}
   if(!url){showStatus('JW.org 주간 교재 URL을 입력하세요.');return}
+  clearSearchState();
   setFetching(true);
   localStorage.setItem('jwWorkerUrl',w);
   localStorage.setItem('lastJwPageUrl',url);
@@ -483,6 +485,7 @@ async function fetchExtraStudy(url){
 async function loadExtraFile(file){
   if(!file)return;
   showPersonalEditor();
+  clearSearchState();
   if(file.type==='application/pdf'||/\.pdf$/i.test(file.name)){
     lastPdfFile=file;
     lastPdfPageCount=0;
@@ -756,7 +759,7 @@ function saveCurrentExtraStudy(){
   currentExtraId=id;
   currentData.url=canonicalUrl(currentData.url||currentUrl);
   currentUrl=currentData.url||currentUrl;
-  const record={id,identity:dataIdentity(currentData),savedAt:new Date().toISOString(),title:currentData.title||'추가 연구',data:currentData,memo:memo.value,report:fullReportText(currentData)};
+  const record={id,identity:dataIdentity(currentData),savedAt:new Date().toISOString(),title:currentData.title||'추가 연구',data:currentData,memo:memo.value,report:fullReportText(currentData),searchState:currentSearchState()};
   localStorage.setItem(extraKey(id),JSON.stringify(record));
   cleanupExtraDuplicates(id,record.identity);
   renderExtraList();
@@ -767,6 +770,7 @@ async function fetchWeeklyMeeting(manual=false){
   if(isFetching)return;
   const w=workerUrl.value.trim().replace(/\/$/,'');
   if(!w){showStatus('Worker 주소가 없어 이번 주 교재를 찾을 수 없습니다.');return}
+  clearSearchState();
   setFetching(true);
   weeklyBtn.disabled=true;
   weeklyBtn.textContent='이번 주 찾는 중...';
@@ -1459,6 +1463,35 @@ window.restoreSearchCandidates=()=>{
   renderJwSearchResults(lastSearchData,lastSearchPages,lastSearchSelectedUrls);
   showStatus('검색 후보 목록으로 돌아왔습니다. 선택을 조정한 뒤 다시 분석할 수 있습니다.');
 };
+function currentSearchState(){
+  const selected=currentSearchSelection();
+  const pages=uniquePages(lastSearchPages.length?lastSearchPages:(currentData?.relatedPages||[]))
+    .filter(page=>page.sourceType==='JW.org 검색'||page.searchQuery);
+  if(!pages.length&&!selected.length&&!lastSearchData)return null;
+  return {
+    savedAt:new Date().toISOString(),
+    query:searchInput.value.trim(),
+    data:lastSearchData,
+    pages,
+    selectedUrls:selected
+  };
+}
+function restoreSearchState(state){
+  lastSearchData=state?.data||null;
+  lastSearchPages=uniquePages(state?.pages||[]);
+  lastSearchSelectedUrls=(state?.selectedUrls||[]).filter(Boolean);
+  if(state?.query)searchInput.value=state.query;
+  if(lastSearchData&&lastSearchPages.length){
+    renderJwSearchResults(lastSearchData,lastSearchPages,lastSearchSelectedUrls);
+  }else{
+    searchResults.innerHTML='';
+  }
+}
+function clearSearchState(){
+  lastSearchPages=[];
+  lastSearchData=null;
+  lastSearchSelectedUrls=[];
+}
 window.addSearchAnalysisToMemo=()=>{
   const pages=searchMaterialPages();
   if(!pages.length){showStatus('메모에 담을 선택 자료가 없습니다. 후보 목록에서 자료를 선택하세요.');return}
@@ -1744,6 +1777,7 @@ window.loadExtraStudy=id=>{
   currentMode='extra';
   showPersonalEditor();
   renderData(record.data);
+  restoreSearchState(record.searchState);
   memo.value=record.memo||'';
   updateSaveLabels();
   showStatus('개인 연구 프로젝트를 불러왔습니다.');
