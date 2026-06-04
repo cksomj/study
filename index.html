@@ -107,11 +107,15 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
     </div>
     <div class="row" style="margin-top:10px">
       <input id="extraFile" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html">
-      <button id="ocrPdfBtn" class="ghost">PDF OCR로 다시 읽기</button>
+      <input id="ocrStartPage" type="number" min="1" value="1" placeholder="시작쪽" style="max-width:110px">
+      <input id="ocrEndPage" type="number" min="1" placeholder="끝쪽" style="max-width:110px">
+      <button id="ocrPdfBtn" class="ghost">선택 범위 OCR</button>
+      <button id="ocrAllPdfBtn" class="ghost">전체 OCR</button>
       <button id="newExtraBtn" class="secondary">다른 새 연구 만들기</button>
       <button id="saveExtraBtn" class="ghost">현재 연구 저장</button>
       <button id="personalListBtn" class="ghost">개인연구 리스트</button>
     </div>
+    <p id="pdfPageInfo" class="small muted"></p>
   </section>
 
   <p id="status" class="warn" style="display:none"></p>
@@ -183,6 +187,7 @@ let currentData=null;
 let currentMode='weekly';
 let currentExtraId='';
 let lastPdfFile=null;
+let lastPdfPageCount=0;
 const appPassword='191482';
 const sampleUrl='https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-5월-6월-집회-교재/생활과-봉사-집회-계획표-2026년-6월-1-7일/';
 const defaultWorkerUrl='https://jw-study-fetcher.cksomj.workers.dev';
@@ -221,6 +226,10 @@ const extraUrl=$('extraUrl');
 const extraFetchBtn=$('extraFetchBtn');
 const extraFile=$('extraFile');
 const ocrPdfBtn=$('ocrPdfBtn');
+const ocrAllPdfBtn=$('ocrAllPdfBtn');
+const ocrStartPage=$('ocrStartPage');
+const ocrEndPage=$('ocrEndPage');
+const pdfPageInfo=$('pdfPageInfo');
 const newExtraBtn=$('newExtraBtn');
 const saveExtraBtn=$('saveExtraBtn');
 const statusBox=$('status');
@@ -270,7 +279,8 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.onclick=()=>switchMode
 
 extraFetchBtn.onclick=async()=>{try{await fetchExtraStudy(extraUrl.value.trim())}catch(e){showStatus(e.message)}};
 extraFile.onchange=async()=>{try{await loadExtraFile(extraFile.files?.[0])}catch(e){showStatus(e.message)}};
-ocrPdfBtn.onclick=async()=>{try{await reloadLastPdfWithOcr()}catch(e){showStatus(e.message)}};
+ocrPdfBtn.onclick=async()=>{try{await reloadLastPdfWithOcr(false)}catch(e){showStatus(e.message)}};
+ocrAllPdfBtn.onclick=async()=>{try{await reloadLastPdfWithOcr(true)}catch(e){showStatus(e.message)}};
 personalNewBtn.onclick=()=>newExtraProject();
 personalListBtn.onclick=()=>showPersonalDashboard();
 newExtraBtn.onclick=()=>newExtraProject();
@@ -480,8 +490,12 @@ async function loadExtraFile(file){
   showPersonalEditor();
   if(file.type==='application/pdf'||/\.pdf$/i.test(file.name)){
     lastPdfFile=file;
+    lastPdfPageCount=0;
+    ocrStartPage.value=1;
+    ocrEndPage.value='';
     showStatus('PDF 본문을 읽는 중입니다...');
     const data=await buildDataFromPdf(file);
+    await updatePdfPageInfo(file);
     currentData=data;
     currentUrl=data.url;
     currentExtraId='';
@@ -498,18 +512,40 @@ async function loadExtraFile(file){
   renderData(data);
   showStatus('파일 내용을 추가 연구로 불러왔습니다.');
 }
-async function reloadLastPdfWithOcr(){
+async function updatePdfPageInfo(file){
+  try{
+    const pdfjs=await loadPdfJs();
+    const bytes=await file.arrayBuffer();
+    const pdf=await pdfjs.getDocument({data:bytes}).promise;
+    lastPdfPageCount=pdf.numPages;
+    ocrStartPage.value=ocrStartPage.value||1;
+    ocrEndPage.value=ocrEndPage.value||Math.min(pdf.numPages,5);
+    pdfPageInfo.textContent=`선택한 PDF: 전체 ${pdf.numPages}쪽. 필요한 범위를 지정해 OCR로 읽을 수 있습니다.`;
+  }catch(e){
+    pdfPageInfo.textContent='PDF 페이지 수를 확인하지 못했습니다.';
+  }
+}
+async function reloadLastPdfWithOcr(all=false){
   const file=lastPdfFile||extraFile.files?.[0];
   if(!file||!/\.pdf$/i.test(file.name)){showStatus('먼저 PDF 파일을 선택하세요.');return}
   lastPdfFile=file;
+  if(!lastPdfPageCount)await updatePdfPageInfo(file);
+  const range=ocrRange(all);
   showPersonalEditor();
-  showStatus('PDF를 OCR로 다시 읽는 중입니다. 페이지 수가 많으면 시간이 걸립니다...');
-  const data=await buildDataFromPdfOcr(file);
+  showStatus(all?'PDF 전체를 OCR로 읽는 중입니다. 페이지 수가 많으면 시간이 걸립니다...':`PDF ${range.start}-${range.end}쪽을 OCR로 읽는 중입니다...`);
+  const data=await buildDataFromPdfOcr(file,range.start,range.end);
   currentData=data;
   currentUrl=data.url;
   currentExtraId='';
   renderData(data);
   showStatus('OCR로 PDF를 다시 읽었습니다. 본문과 리포트를 확인해 보세요.');
+}
+function ocrRange(all=false){
+  const total=lastPdfPageCount||Number(ocrEndPage.value)||1;
+  if(all)return {start:1,end:total};
+  const start=Math.max(1,Number(ocrStartPage.value)||1);
+  const end=Math.min(total,Math.max(start,Number(ocrEndPage.value)||start));
+  return {start,end};
 }
 async function buildDataFromPdf(file){
   const pdfjs=await loadPdfJs();
@@ -529,15 +565,17 @@ async function buildDataFromPdf(file){
   data.pdfTextWarning=warnings.length>0;
   return data;
 }
-async function buildDataFromPdfOcr(file){
+async function buildDataFromPdfOcr(file,startPage=1,endPage=40){
   const pdfjs=await loadPdfJs();
   const Tesseract=await loadTesseract();
   const bytes=await file.arrayBuffer();
   const pdf=await pdfjs.getDocument({data:bytes}).promise;
-  const blocks=[{type:'h1',text:file.name},{type:'p',text:'OCR로 PDF 이미지를 다시 읽은 결과입니다. OCR 특성상 일부 글자는 원문과 다를 수 있습니다.'}];
-  const maxPages=Math.min(pdf.numPages,40);
-  for(let pageNum=1;pageNum<=maxPages;pageNum++){
-    showStatus(`PDF OCR 진행 중... ${pageNum}/${maxPages}쪽`);
+  const start=Math.max(1,Math.min(pdf.numPages,Number(startPage)||1));
+  const end=Math.max(start,Math.min(pdf.numPages,Number(endPage)||start));
+  const total=end-start+1;
+  const blocks=[{type:'h1',text:`${file.name} OCR ${start}-${end}쪽`},{type:'p',text:`OCR로 PDF ${start}-${end}쪽을 다시 읽은 결과입니다. OCR 특성상 일부 글자는 원문과 다를 수 있습니다.`}];
+  for(let pageNum=start;pageNum<=end;pageNum++){
+    showStatus(`PDF OCR 진행 중... ${pageNum}쪽 (${pageNum-start+1}/${total})`);
     const page=await pdf.getPage(pageNum);
     const viewport=page.getViewport({scale:2});
     const canvas=document.createElement('canvas');
@@ -546,12 +584,12 @@ async function buildDataFromPdfOcr(file){
     const ctx=canvas.getContext('2d');
     await page.render({canvasContext:ctx,viewport}).promise;
     const result=await Tesseract.recognize(canvas,'kor+eng',{logger:m=>{
-      if(m.status&&m.progress)showStatus(`PDF OCR ${pageNum}/${maxPages}쪽: ${m.status} ${Math.round(m.progress*100)}%`);
+      if(m.status&&m.progress)showStatus(`PDF OCR ${pageNum}쪽: ${m.status} ${Math.round(m.progress*100)}%`);
     }});
     const text=cleanPoint(result?.data?.text||'');
     if(text)blocks.push({type:'p',text:`${pageNum}쪽. ${text}`});
   }
-  if(pdf.numPages>maxPages)blocks.push({type:'p',text:`OCR은 속도를 위해 처음 ${maxPages}쪽까지만 처리했습니다. 전체 ${pdf.numPages}쪽 중 나머지는 필요하면 PDF를 나누어 다시 읽으세요.`});
+  if(end<pdf.numPages)blocks.push({type:'p',text:`이번 OCR은 ${start}-${end}쪽만 처리했습니다. 전체 ${pdf.numPages}쪽 중 다른 범위가 필요하면 시작쪽과 끝쪽을 바꿔 다시 실행하세요.`});
   return {url:'file:'+file.name,title:file.name+' OCR',blocks,verses:extractVersesFromBlocks(blocks),related:extractJwLinksFromText(textOf(blocks)),relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}},ocr:true};
 }
 function pdfPageText(items){
