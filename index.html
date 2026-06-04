@@ -188,6 +188,7 @@ let lastPdfPageCount=0;
 let lastSearchPages=[];
 let lastSearchData=null;
 let lastSearchSelectedUrls=[];
+let lastSearchAnalysisPages=[];
 const appPassword='191482';
 const sampleUrl='https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-5월-6월-집회-교재/생활과-봉사-집회-계획표-2026년-6월-1-7일/';
 const defaultWorkerUrl='https://jw-study-fetcher.cksomj.workers.dev';
@@ -1412,6 +1413,7 @@ function analyzeSearchMaterials(){
     return;
   }
   lastSearchSelectedUrls=currentSearchSelection();
+  lastSearchAnalysisPages=pages;
   const html=buildSearchAnalysisReport(pages);
   searchResults.innerHTML=html;
   report.innerHTML=html+buildReport(currentData);
@@ -1473,15 +1475,24 @@ function currentSearchState(){
     query:searchInput.value.trim(),
     data:lastSearchData,
     pages,
-    selectedUrls:selected
+    selectedUrls:selected,
+    analysisPages:lastSearchAnalysisPages
   };
 }
 function restoreSearchState(state){
   lastSearchData=state?.data||null;
   lastSearchPages=uniquePages(state?.pages||[]);
   lastSearchSelectedUrls=(state?.selectedUrls||[]).filter(Boolean);
+  lastSearchAnalysisPages=uniquePages(state?.analysisPages||[]);
   if(state?.query)searchInput.value=state.query;
-  if(lastSearchData&&lastSearchPages.length){
+  if(lastSearchAnalysisPages.length){
+    const html=buildSearchAnalysisReport(lastSearchAnalysisPages);
+    searchResults.innerHTML=html;
+    if(currentData){
+      report.innerHTML=html+buildReport(currentData);
+      hydrateDraftInputs();
+    }
+  }else if(lastSearchData&&lastSearchPages.length){
     renderJwSearchResults(lastSearchData,lastSearchPages,lastSearchSelectedUrls);
   }else{
     searchResults.innerHTML='';
@@ -1491,6 +1502,7 @@ function clearSearchState(){
   lastSearchPages=[];
   lastSearchData=null;
   lastSearchSelectedUrls=[];
+  lastSearchAnalysisPages=[];
 }
 window.addSearchAnalysisToMemo=()=>{
   const pages=searchMaterialPages();
@@ -1926,7 +1938,9 @@ function draftSummaryText(url=currentUrl){
 function fullReportText(data){
   const draftText=draftSummaryText();
   const memoText=(memo.value||'').trim();
+  const searchText=lastSearchAnalysisPages.length?searchAnalysisMemoText(lastSearchAnalysisPages):'';
   return buildPlainReport(data)
+    +(searchText?'\n\n'+searchText:'')
     +(draftText?'\n\n[내 해설 초안]\n'+draftText:'')
     +(memoText?'\n\n[나의 메모]\n'+memoText:'');
 }
