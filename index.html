@@ -107,6 +107,7 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
     </div>
     <div class="row" style="margin-top:10px">
       <input id="extraFile" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html">
+      <button id="ocrPdfBtn" class="ghost">PDF OCR로 다시 읽기</button>
       <button id="newExtraBtn" class="secondary">다른 새 연구 만들기</button>
       <button id="saveExtraBtn" class="ghost">현재 연구 저장</button>
       <button id="personalListBtn" class="ghost">개인연구 리스트</button>
@@ -181,6 +182,7 @@ let currentUrl='';
 let currentData=null;
 let currentMode='weekly';
 let currentExtraId='';
+let lastPdfFile=null;
 const appPassword='191482';
 const sampleUrl='https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-5월-6월-집회-교재/생활과-봉사-집회-계획표-2026년-6월-1-7일/';
 const defaultWorkerUrl='https://jw-study-fetcher.cksomj.workers.dev';
@@ -218,6 +220,7 @@ const saveReportBtn=$('saveReportBtn');
 const extraUrl=$('extraUrl');
 const extraFetchBtn=$('extraFetchBtn');
 const extraFile=$('extraFile');
+const ocrPdfBtn=$('ocrPdfBtn');
 const newExtraBtn=$('newExtraBtn');
 const saveExtraBtn=$('saveExtraBtn');
 const statusBox=$('status');
@@ -267,6 +270,7 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.onclick=()=>switchMode
 
 extraFetchBtn.onclick=async()=>{try{await fetchExtraStudy(extraUrl.value.trim())}catch(e){showStatus(e.message)}};
 extraFile.onchange=async()=>{try{await loadExtraFile(extraFile.files?.[0])}catch(e){showStatus(e.message)}};
+ocrPdfBtn.onclick=async()=>{try{await reloadLastPdfWithOcr()}catch(e){showStatus(e.message)}};
 personalNewBtn.onclick=()=>newExtraProject();
 personalListBtn.onclick=()=>showPersonalDashboard();
 newExtraBtn.onclick=()=>newExtraProject();
@@ -475,13 +479,14 @@ async function loadExtraFile(file){
   if(!file)return;
   showPersonalEditor();
   if(file.type==='application/pdf'||/\.pdf$/i.test(file.name)){
+    lastPdfFile=file;
     showStatus('PDF 본문을 읽는 중입니다...');
     const data=await buildDataFromPdf(file);
     currentData=data;
     currentUrl=data.url;
     currentExtraId='';
     renderData(data);
-    showStatus('PDF 내용을 추가 연구로 불러왔습니다. 주요 내용과 해설 질문을 확인해 보세요.');
+    showStatus(data.pdfTextWarning?'PDF 텍스트가 깨질 수 있습니다. 글자가 이상하면 PDF OCR로 다시 읽기를 누르세요.':'PDF 내용을 추가 연구로 불러왔습니다. 주요 내용과 해설 질문을 확인해 보세요.');
     return;
   }
   const text=await file.text();
@@ -492,6 +497,19 @@ async function loadExtraFile(file){
   currentExtraId='';
   renderData(data);
   showStatus('파일 내용을 추가 연구로 불러왔습니다.');
+}
+async function reloadLastPdfWithOcr(){
+  const file=lastPdfFile||extraFile.files?.[0];
+  if(!file||!/\.pdf$/i.test(file.name)){showStatus('먼저 PDF 파일을 선택하세요.');return}
+  lastPdfFile=file;
+  showPersonalEditor();
+  showStatus('PDF를 OCR로 다시 읽는 중입니다. 페이지 수가 많으면 시간이 걸립니다...');
+  const data=await buildDataFromPdfOcr(file);
+  currentData=data;
+  currentUrl=data.url;
+  currentExtraId='';
+  renderData(data);
+  showStatus('OCR로 PDF를 다시 읽었습니다. 본문과 리포트를 확인해 보세요.');
 }
 async function buildDataFromPdf(file){
   const pdfjs=await loadPdfJs();
@@ -507,7 +525,34 @@ async function buildDataFromPdf(file){
     if(isPoorPdfText(lines))warnings.push(pageNum);
   }
   if(warnings.length)blocks.splice(1,0,{type:'p',text:`PDF 텍스트 추출 경고: ${warnings.slice(0,8).join(', ')}쪽에서 글자 인코딩이 깨졌을 수 있습니다. 원본 PDF에서 복사한 글자도 깨진다면 OCR 처리가 필요합니다.`});
-  return {url:'file:'+file.name,title:file.name,blocks,verses:extractVersesFromBlocks(blocks),related:extractJwLinksFromText(textOf(blocks)),relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+  const data={url:'file:'+file.name,title:file.name,blocks,verses:extractVersesFromBlocks(blocks),related:extractJwLinksFromText(textOf(blocks)),relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}}};
+  data.pdfTextWarning=warnings.length>0;
+  return data;
+}
+async function buildDataFromPdfOcr(file){
+  const pdfjs=await loadPdfJs();
+  const Tesseract=await loadTesseract();
+  const bytes=await file.arrayBuffer();
+  const pdf=await pdfjs.getDocument({data:bytes}).promise;
+  const blocks=[{type:'h1',text:file.name},{type:'p',text:'OCR로 PDF 이미지를 다시 읽은 결과입니다. OCR 특성상 일부 글자는 원문과 다를 수 있습니다.'}];
+  const maxPages=Math.min(pdf.numPages,40);
+  for(let pageNum=1;pageNum<=maxPages;pageNum++){
+    showStatus(`PDF OCR 진행 중... ${pageNum}/${maxPages}쪽`);
+    const page=await pdf.getPage(pageNum);
+    const viewport=page.getViewport({scale:2});
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.ceil(viewport.width);
+    canvas.height=Math.ceil(viewport.height);
+    const ctx=canvas.getContext('2d');
+    await page.render({canvasContext:ctx,viewport}).promise;
+    const result=await Tesseract.recognize(canvas,'kor+eng',{logger:m=>{
+      if(m.status&&m.progress)showStatus(`PDF OCR ${pageNum}/${maxPages}쪽: ${m.status} ${Math.round(m.progress*100)}%`);
+    }});
+    const text=cleanPoint(result?.data?.text||'');
+    if(text)blocks.push({type:'p',text:`${pageNum}쪽. ${text}`});
+  }
+  if(pdf.numPages>maxPages)blocks.push({type:'p',text:`OCR은 속도를 위해 처음 ${maxPages}쪽까지만 처리했습니다. 전체 ${pdf.numPages}쪽 중 나머지는 필요하면 PDF를 나누어 다시 읽으세요.`});
+  return {url:'file:'+file.name,title:file.name+' OCR',blocks,verses:extractVersesFromBlocks(blocks),related:extractJwLinksFromText(textOf(blocks)),relatedPages:[],sections:{bibleRange:'',spiritualGems:{questions:[]},christianLife:{questions:[]}},ocr:true};
 }
 function pdfPageText(items){
   const rows=[];
@@ -573,6 +618,12 @@ async function loadPdfJs(){
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
   window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   return window.pdfjsLib;
+}
+async function loadTesseract(){
+  if(window.Tesseract)return window.Tesseract;
+  await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+  if(!window.Tesseract)throw new Error('OCR 라이브러리를 불러오지 못했습니다.');
+  return window.Tesseract;
 }
 function loadScript(src){
   return new Promise((resolve,reject)=>{
