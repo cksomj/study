@@ -17,7 +17,7 @@ button:disabled{opacity:.62;cursor:wait}
 button.secondary{background:var(--accent)}button.ghost,a.ghost{background:white;color:var(--brand);border:1px solid var(--line)}
 .grid{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:14px;align-items:start}.grid aside,.grid main{min-width:0}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}.report-card{padding:14px}.report-card>summary{font-size:18px}.report-body{padding-top:10px}.report-actions{display:flex;justify-content:flex-end;margin:0 0 10px}.report-actions button{white-space:nowrap;padding:9px 10px}.source-body{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}.source-body h3{margin-top:0}.source-body .content-preview{max-height:430px;overflow:auto;border-top:1px solid var(--line);padding-top:10px}.prep-box,.study-range{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.prep-box h4,.study-range h4{margin:0 0 8px}.prep-box ul{margin:0;padding-left:20px}.study-range p{margin:4px 0}.tag{display:inline-block;background:var(--soft);color:#2f5e50;border-radius:999px;padding:6px 9px;margin:3px;font-weight:800;font-size:12px}
-.warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}
+.warn{background:var(--warn);border:1px solid #ead7bb;border-radius:14px;padding:12px;color:#744f29}.content p,.report p{line-height:1.78}.content h1,.content h2,.content h3{margin-top:22px}.content-block{border-bottom:1px solid var(--line);padding:8px 0 14px}.content-block:last-child{border-bottom:0}.inline-report{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0 2px}.inline-report h4{margin:0 0 8px;color:var(--brand)}.inline-report ul{margin:0;padding-left:20px}.inline-report details{margin-top:10px}
 .linkList a{display:block;background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;color:var(--ink);text-decoration:none}
 .mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.mode-tabs button{background:white;color:var(--brand);border:1px solid var(--line)}.mode-tabs button.on{background:var(--brand);color:white}.mode-panel{display:none}.mode-panel.on{display:block}.scope-hidden,.view-hidden{display:none!important}.project-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.project-actions button{min-height:52px}.project-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.project-list .card{margin:0}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.tabs button{background:white;color:var(--brand);border:1px solid var(--line);padding:9px 10px}.tabs button.on{background:var(--brand);color:white}
@@ -68,9 +68,8 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
 
   <input id="workerUrl" type="hidden">
 
-  <div class="mode-tabs" id="modeTabs">
+  <div class="mode-tabs view-hidden" id="modeTabs">
     <button class="on" data-mode="weekly">주간 교재</button>
-    <button data-mode="extra">추가 연구</button>
   </div>
 
   <section class="panel mode-panel on" data-mode-panel="weekly">
@@ -153,9 +152,7 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
             <input id="searchInput" placeholder="예: 여호와 사랑, 용기, 가정, 봉사, 렘 2:28">
             <button id="searchBtn" class="secondary">JW.org 검색</button>
             <button id="analyzeSearchBtn" class="ghost">검색 자료 분석</button>
-            <button id="localSearchBtn" class="ghost">현재 자료 안에서 찾기</button>
           </div>
-          <div id="relatedTerms" class="small muted" style="margin-top:8px"></div>
           <div id="searchResults" class="search-result"></div>
         </div>
         <div class="tabs">
@@ -245,8 +242,6 @@ const verses=$('verses');
 const searchInput=$('searchInput');
 const searchBtn=$('searchBtn');
 const analyzeSearchBtn=$('analyzeSearchBtn');
-const localSearchBtn=$('localSearchBtn');
-const relatedTerms=$('relatedTerms');
 const searchResults=$('searchResults');
 const report=$('report');
 const contentTab=$('contentTab');
@@ -267,9 +262,7 @@ sampleBtn.onclick=()=>pageUrl.value=sampleUrl;
 weeklyBtn.onclick=()=>fetchWeeklyMeeting(true);
 searchBtn.onclick=()=>searchJwOrg();
 analyzeSearchBtn.onclick=()=>analyzeSearchMaterials();
-localSearchBtn.onclick=()=>renderLocalSearchResults();
 searchInput.onkeydown=e=>{if(e.key==='Enter')searchJwOrg()};
-searchInput.oninput=()=>renderRelatedTerms();
 
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b===btn));
@@ -381,7 +374,7 @@ function showHome(){
 }
 function switchMode(mode){
   currentMode=mode;
-  modeTabs.classList.toggle('view-hidden',mode==='extra');
+  modeTabs.classList.add('view-hidden');
   document.querySelectorAll('[data-mode]').forEach(btn=>btn.classList.toggle('on',btn.dataset.mode===mode));
   document.querySelectorAll('[data-mode-panel]').forEach(panel=>panel.classList.toggle('on',panel.dataset.modePanel===mode));
   document.querySelectorAll('[data-scope]').forEach(panel=>panel.classList.toggle('scope-hidden',panel.dataset.scope!==mode));
@@ -429,7 +422,6 @@ function newExtraProject(){
   linksTab.innerHTML='';
   relatedTab.innerHTML='';
   searchInput.value='';
-  relatedTerms.innerHTML='';
   searchResults.innerHTML='';
   memo.value='';
   memoState.textContent='새 연구 프로젝트';
@@ -821,12 +813,10 @@ function renderData(data){
   resultTitle.textContent=data.title||'자료 내용';
   sourceUrl.innerHTML=data.url?`원문: <a href="${escapeAttr(data.url)}" target="_blank" rel="noreferrer">${escapeHtml(data.url)}</a>`:'';
   verses.innerHTML=(data.verses||[]).map(v=>`<span class="tag">${escapeHtml(v)}</span>`).join('');
-  contentTab.innerHTML=(data.blocks||[]).map(renderBlock).join('')||'<p class="muted">표시할 본문이 없습니다.</p>';
+  contentTab.innerHTML=renderContentWithInlineReports(data);
   linksTab.innerHTML=renderLinks(data);
   relatedTab.innerHTML=renderRelatedPages(data);
   report.innerHTML=buildReport(data);
-  renderRelatedTerms();
-  renderLocalSearchResults(true);
   hydrateDraftInputs();
   memo.value=localStorage.getItem(memoKey(currentUrl))||'';
   memoState.textContent=currentUrl?'메모 저장 기준: '+currentUrl:'';
@@ -1258,9 +1248,55 @@ function findBibleRange(blocks){
   return b?.text || '';
 }
 function textOf(blocks){return (blocks||[]).map(b=>b.text||'').join(' ')}
+function renderContentWithInlineReports(data){
+  const blocks=data.blocks||[];
+  if(!blocks.length)return '<p class="muted">표시할 본문이 없습니다.</p>';
+  const relatedPages=data.relatedPages||[];
+  return blocks.map((block,index)=>{
+    const original=renderBlock(block);
+    const inline=inlineReportForBlock(block,index,blocks,relatedPages);
+    return `<div class="content-block">${original}${inline}</div>`;
+  }).join('');
+}
 function renderBlock(b){
   if(b.type==='h1'||b.type==='h2'||b.type==='h3')return `<${b.type}>${escapeHtml(b.text)}</${b.type}>`;
   return `<p>${escapeHtml(b.text)}</p>`;
+}
+function inlineReportForBlock(block,index,blocks,relatedPages){
+  const text=cleanPoint(block?.text||'');
+  if(!text||block.type==='h1')return '';
+  if(text.length<24&&!isNumberedSource(text))return '';
+  const title=sourceBlockLabel(text,index);
+  const localPoints=inlineLocalPoints(text);
+  const candidates=findCandidates(relatedPages,text,importantWords(text).slice(0,8)).slice(0,2);
+  const candidateHtml=candidates.length?`
+    <details>
+      <summary>관련 자료 후보</summary>
+      ${candidates.map(page=>`
+        <div class="summary-item">
+          <b>${escapeHtml(page.title||page.sourceText||page.url)}</b>
+          <p class="small muted"><a href="${escapeAttr(page.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
+          ${pointList(pageSnippets(page).slice(0,3))}
+        </div>`).join('')}
+    </details>`:'';
+  return `<div class="inline-report">
+    <h4>${escapeHtml(title)} 요점</h4>
+    ${pointList(localPoints)}
+    ${candidateHtml}
+  </div>`;
+}
+function sourceBlockLabel(text,index){
+  const m=String(text||'').match(/^\s*(\d+)[.)\s]/);
+  return m?`${m[1]}번 원문`:`${index+1}번째 원문`;
+}
+function isNumberedSource(text){
+  return /^\s*\d+[.)\s]/.test(String(text||''));
+}
+function inlineLocalPoints(text){
+  const cleaned=cleanPoint(text).replace(/^\s*\d+[.)\s]*/,'');
+  const sentences=cleaned.split(/(?<=[.!?？。])\s+|(?<=다\.)\s+|(?<=요\.)\s+/).map(cleanPoint).filter(x=>x.length>12);
+  const picked=(sentences.length?sentences:[cleaned]).slice(0,3);
+  return picked.map(item=>item.length>180?item.slice(0,180).trim()+'...':item);
 }
 function renderLinks(data){
   const links=uniqueLinks(data.related||[]);
@@ -1277,26 +1313,11 @@ function renderRelatedPages(data){
   return pages.map(p=>`<details><summary>${escapeHtml(p.title||p.url)}${p.error?' - 오류':''}</summary><p class="small muted">${escapeHtml(p.url)}</p>${p.error?`<p class="warn">${escapeHtml(p.error)}</p>`:pointList(topPoints(p.blocks||[],8))}</details>`).join('');
 }
 
-function renderRelatedTerms(){
-  if(!relatedTerms)return;
-  const terms=relatedSearchTerms().slice(0,10);
-  if(!terms.length){
-    relatedTerms.innerHTML='<span>자료를 가져오면 관련어 후보가 표시됩니다.</span>';
-    return;
-  }
-  relatedTerms.innerHTML='관련어 후보: '+terms.map(term=>`<button class="ghost" type="button" onclick="addSearchTerm('${escapeAttr(term)}')">${escapeHtml(term)}</button>`).join(' ');
-}
 function relatedSearchTerms(){
   const q=importantWords(searchInput.value);
   const fromData=currentData?importantWords(textOf(currentData.blocks||[])).slice(0,12):[];
   const fromQuestions=currentData?genericStudyQuestions(currentData.blocks||[]).flatMap(x=>importantWords(x).slice(0,2)):[];
   return uniqueTexts([...q,...fromData,...fromQuestions]).filter(x=>String(x).length>1);
-}
-window.addSearchTerm=term=>{
-  const existing=importantWords(searchInput.value);
-  const next=uniqueTexts([...existing,term]).slice(0,8);
-  searchInput.value=next.join(' ');
-  renderRelatedTerms();
 }
 async function searchJwOrg(){
   const q=searchInput.value.trim();
@@ -1454,7 +1475,6 @@ window.searchFromQuestion=encoded=>{
   const question=decodeURIComponent(encoded);
   const terms=questionKeywords(question).filter(w=>String(w).length>1).slice(0,8);
   searchInput.value=(terms.length?terms:[question]).join(' ');
-  renderRelatedTerms();
   searchJwOrg();
   document.querySelector('.search-box')?.scrollIntoView({behavior:'smooth',block:'start'});
   showStatus('질문 핵심어로 JW.org 자료를 검색합니다.');
