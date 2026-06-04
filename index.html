@@ -1522,68 +1522,6 @@ function searchAnalysisMemoText(pages){
   }).join('\n\n');
   return `[JW.org 선택 검색 자료 요약]\n\n전체 주요점\n${overall}\n\n자료별 요점\n${items}`;
 }
-function renderLocalSearchResults(silent=false){
-  if(!searchResults)return;
-  const q=searchInput.value.trim();
-  if(!currentData){
-    if(!silent)searchResults.innerHTML='<p class="small muted">자료를 가져오면 현재 자료 안에서 찾을 수 있습니다. JW.org 검색은 자료가 없어도 사용할 수 있습니다.</p>';
-    return;
-  }
-  if(q.length<2){
-    if(!silent)searchResults.innerHTML='<p class="small muted">두 글자 이상 입력하면 현재 본문과 가져온 링크 자료 안에서 근거 문단을 찾습니다.</p>';
-    return;
-  }
-  const words=importantWords(q).length?importantWords(q):[q];
-  const matches=searchCorpus(currentData,words).slice(0,12);
-  if(!matches.length){
-    if(!silent)searchResults.innerHTML='<p class="small muted">현재 가져온 자료 안에서는 검색어와 맞는 문단을 찾지 못했습니다. JW.org 검색을 사용해 보세요.</p>';
-    return;
-  }
-  searchResults.innerHTML=`<h4>현재 자료 검색 결과 ${matches.length}개</h4>`+matches.map(item=>`
-    <div class="card">
-      <p><span class="tag">${escapeHtml(item.sourceType)}</span> <b>${escapeHtml(item.title)}</b></p>
-      <p>${highlightTerms(item.text,words)}</p>
-      <button class="ghost" onclick="addSearchResultToMemo('${escapeAttr(item.id)}')">메모에 담기</button>
-      ${item.url?`<p class="small muted"><a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>`:''}
-    </div>`).join('');
-}
-function searchCorpus(data,words){
-  const corpus=[
-    ...(data.blocks||[]).map((b,i)=>({id:'main-'+i,title:data.title||'주간 교재 본문',sourceType:'본문',url:data.url||'',text:b.text||'',index:i}))
-  ];
-  (data.relatedPages||[]).forEach((page,pageIndex)=>{
-    if(page.error)return;
-    (page.blocks||[]).forEach((b,i)=>corpus.push({
-      id:'page-'+pageIndex+'-'+i,
-      title:page.title||page.sourceText||page.url||'링크 자료',
-      sourceType:page.sourceType||'링크 자료',
-      url:page.url||'',
-      text:b.text||'',
-      index:i
-    }));
-  });
-  return corpus.map(item=>{
-    const text=cleanPoint(item.text);
-    const lower=text.toLowerCase();
-    const score=words.reduce((n,w)=>{
-      const word=String(w).toLowerCase();
-      return n+(lower.includes(word)?2:0)+(String(item.title).toLowerCase().includes(word)?1:0);
-    },0);
-    return {...item,text,score};
-  }).filter(item=>item.text.length>12&&item.score>0).sort((a,b)=>b.score-a.score||a.index-b.index);
-}
-window.addSearchResultToMemo=id=>{
-  if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
-  const q=searchInput.value.trim();
-  const words=importantWords(q).length?importantWords(q):[q];
-  const item=searchCorpus(currentData,words).find(x=>x.id===id);
-  if(!item){showStatus('검색 결과를 다시 찾지 못했습니다. 검색을 다시 실행해 보세요.');return}
-  const text=`[검색 메모] ${item.title}\n${item.text}${item.url?'\n원문: '+item.url:''}`;
-  memo.value=(memo.value?memo.value+'\n\n':'')+text;
-  if(currentUrl)localStorage.setItem(memoKey(currentUrl),memo.value);
-  memoState.textContent='검색 결과를 메모에 담았습니다.';
-  showStatus('검색 결과를 메모에 담았습니다.');
-}
 window.searchFromQuestion=encoded=>{
   if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
   const question=decodeURIComponent(encoded);
@@ -1612,16 +1550,6 @@ function cleanCopiedText(text){
     .filter(Boolean)
     .join('\n');
 }
-function highlightTerms(text,words){
-  let html=escapeHtml(text);
-  words.filter(w=>String(w).length>1).slice(0,8).forEach(word=>{
-    const safe=escapeRegExp(escapeHtml(word));
-    html=html.replace(new RegExp(safe,'gi'),m=>`<mark>${m}</mark>`);
-  });
-  return html;
-}
-function escapeRegExp(text){return String(text).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
-
 window.fetchRelated=async encoded=>{await fetchFromWorker(decodeURIComponent(encoded),false)}
 window.fetchCurrentRelatedPages=async()=>{
   if(!currentData){showStatus('먼저 자료를 가져오세요.');return}
