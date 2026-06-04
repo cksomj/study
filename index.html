@@ -186,6 +186,8 @@ let currentExtraId='';
 let lastPdfFile=null;
 let lastPdfPageCount=0;
 let lastSearchPages=[];
+let lastSearchData=null;
+let lastSearchSelectedUrls=[];
 const appPassword='191482';
 const sampleUrl='https://www.jw.org/ko/라이브러리/여호와의-증인-집회-교재/2026년-5월-6월-집회-교재/생활과-봉사-집회-계획표-2026년-6월-1-7일/';
 const defaultWorkerUrl='https://jw-study-fetcher.cksomj.workers.dev';
@@ -1337,6 +1339,8 @@ async function searchJwOrg(){
     if(!res.ok||data.error)throw new Error(data.error||('Worker 응답 오류: '+res.status));
     const pages=uniquePages(data.relatedPages||[]);
     lastSearchPages=pages;
+    lastSearchData=data;
+    lastSearchSelectedUrls=pages.filter((page,index)=>index<5&&!page.error).map(page=>page.url).filter(Boolean);
     if(!currentData){
       currentData={url:'jw-search:'+q,title:'JW.org 검색: '+q,blocks:[],verses:[],related:[],relatedPages:[],sections:{spiritualGems:{questions:[]},christianLife:{questions:[]}}};
       currentUrl=currentData.url;
@@ -1347,7 +1351,7 @@ async function searchJwOrg(){
     linksTab.innerHTML=renderLinks(currentData);
     report.innerHTML=buildReport(currentData);
     hydrateDraftInputs();
-    renderJwSearchResults(data,pages);
+    renderJwSearchResults(data,pages,lastSearchSelectedUrls);
     showStatus('JW.org 검색 후보를 가져왔습니다. 필요한 자료를 체크한 뒤 검색 자료 분석을 누르세요.');
   }catch(e){
     searchResults.innerHTML='<p class="warn">'+escapeHtml(e.message)+'</p>';
@@ -1357,8 +1361,9 @@ async function searchJwOrg(){
     searchBtn.textContent='JW.org 검색';
   }
 }
-function renderJwSearchResults(data,pages){
+function renderJwSearchResults(data,pages,selectedUrls=[]){
   const queries=data.searchQueries||[];
+  const selected=new Set(selectedUrls||[]);
   if(!pages.length){
     searchResults.innerHTML='<p class="muted">JW.org에서 가져온 관련 자료가 없습니다. 검색어를 조금 다르게 입력해 보세요.</p>';
     return;
@@ -1367,6 +1372,7 @@ function renderJwSearchResults(data,pages){
     <h4>JW.org 검색 후보 ${pages.length}개</h4>
     ${queries.length?`<p class="small muted">함께 검색한 관련어: ${queries.map(escapeHtml).join(', ')}</p>`:''}
     <p class="small muted">내용이 맞는 자료만 체크한 다음 <b>검색 자료 분석</b>을 누르세요. 처음에는 상위 후보 5개가 선택되어 있습니다.</p>
+    <p class="small muted" id="searchSelectionCount"></p>
     <div class="search-tools">
       <button class="ghost" onclick="toggleAllSearchMaterials(true)">전체 선택</button>
       <button class="ghost" onclick="toggleAllSearchMaterials(false)">전체 해제</button>
@@ -1374,7 +1380,7 @@ function renderJwSearchResults(data,pages){
     ${pages.map((page,index)=>`
       <div class="card">
         <label class="search-pick">
-          <input type="checkbox" class="search-material-check" value="${escapeAttr(page.url||'')}" ${index<5&&!page.error?'checked':''}>
+          <input type="checkbox" class="search-material-check" value="${escapeAttr(page.url||'')}" onchange="updateSearchSelectionCount()" ${selected.has(page.url)?'checked':''}>
           <span>${index+1}. ${escapeHtml(page.title||page.sourceText||page.url)}</span>
         </label>
         <div class="search-meta">
@@ -1385,9 +1391,10 @@ function renderJwSearchResults(data,pages){
         ${page.error?`<p class="warn">${escapeHtml(page.error)}</p>`:pointList(topPoints(page.blocks||[],4))}
         ${page.url?`<a class="btn ghost" href="${escapeAttr(page.url)}" target="_blank" rel="noreferrer">원문 열기</a>`:''}
       </div>`).join('')}`;
+  updateSearchSelectionCount();
 }
 function searchMaterialPages(){
-  const checked=Array.from(document.querySelectorAll('.search-material-check:checked')).map(input=>input.value).filter(Boolean);
+  const checked=currentSearchSelection();
   const source=lastSearchPages.length?lastSearchPages:(currentData?.relatedPages||[]);
   const pages=uniquePages((source||[]).filter(page=>!page.error&&(page.sourceType==='JW.org 검색'||page.searchQuery)));
   if(!checked.length)return [];
@@ -1400,6 +1407,7 @@ function analyzeSearchMaterials(){
     searchResults.innerHTML='<p class="small muted">분석할 자료가 선택되지 않았습니다. JW.org 검색을 실행한 뒤 맞는 후보를 체크하세요.</p>';
     return;
   }
+  lastSearchSelectedUrls=currentSearchSelection();
   const html=buildSearchAnalysisReport(pages);
   searchResults.innerHTML=html;
   report.innerHTML=html+buildReport(currentData);
@@ -1414,21 +1422,39 @@ function buildSearchAnalysisReport(pages){
   return `<section class="source-body search-analysis-report">
     <h3>검색 자료 요점 리포트</h3>
     <p class="small muted">JW.org 검색 후보 중 선택한 자료 ${pages.length}개를 바탕으로 정리했습니다.</p>
+    <div class="search-tools"><button class="ghost" onclick="restoreSearchCandidates()">후보 목록으로 돌아가기</button></div>
     <div class="prep-box"><h4>전체 주요점</h4>${pointList(overall)}</div>
     <div class="prep-box"><h4>관련 핵심어</h4><p>${keywords.map(word=>`<span class="tag">${escapeHtml(word)}</span>`).join('')||'<span class="muted">핵심어 없음</span>'}</p></div>
     <div class="prep-box"><h4>해설 준비에 사용할 질문</h4>${questionList(questions.slice(0,6))}</div>
     <h4>자료별 요점</h4>
     ${pages.map(page=>`
-      <details class="candidate" open>
+      <details class="candidate">
         <summary>${escapeHtml(page.title||page.sourceText||page.url)}</summary>
         <p class="small muted">${escapeHtml(page.searchQuery?('검색어: '+page.searchQuery):'')}<br><a href="${escapeAttr(page.url)}" target="_blank" rel="noreferrer">원문 열기</a></p>
         ${pointList(topPoints(page.blocks||[],5))}
       </details>`).join('')}
   </section>`;
 }
+function currentSearchSelection(){
+  const boxes=Array.from(document.querySelectorAll('.search-material-check'));
+  const checked=boxes.filter(input=>input.checked).map(input=>input.value).filter(Boolean);
+  return boxes.length?checked:lastSearchSelectedUrls;
+}
+window.updateSearchSelectionCount=()=>{
+  const el=$('searchSelectionCount');
+  const checked=Array.from(document.querySelectorAll('.search-material-check:checked')).length;
+  if(el)el.textContent=`현재 선택된 분석 후보: ${checked}개`;
+};
 window.toggleAllSearchMaterials=checked=>{
   document.querySelectorAll('.search-material-check').forEach(input=>{input.checked=checked});
+  lastSearchSelectedUrls=currentSearchSelection();
+  updateSearchSelectionCount();
   showStatus(checked?'검색 후보를 모두 선택했습니다.':'검색 후보 선택을 모두 해제했습니다.');
+};
+window.restoreSearchCandidates=()=>{
+  if(!lastSearchData||!lastSearchPages.length){showStatus('돌아갈 검색 후보 목록이 없습니다. 다시 JW.org 검색을 실행하세요.');return}
+  renderJwSearchResults(lastSearchData,lastSearchPages,lastSearchSelectedUrls);
+  showStatus('검색 후보 목록으로 돌아왔습니다. 선택을 조정한 뒤 다시 분석할 수 있습니다.');
 };
 function renderLocalSearchResults(silent=false){
   if(!searchResults)return;
