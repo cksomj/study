@@ -114,6 +114,7 @@ p,li,b,summary,a,.question,.card,.panel,.source-body,details,pre{overflow-wrap:a
       <input id="ocrEndPage" type="number" min="1" placeholder="끝쪽" style="max-width:110px">
       <button id="ocrPdfBtn" class="ghost">선택 범위 OCR</button>
       <button id="ocrAllPdfBtn" class="ghost">전체 OCR</button>
+      <button id="extraAnalyzeBtn" class="secondary">자료분석</button>
       <button id="newExtraBtn" class="secondary">다른 새 연구 만들기</button>
       <button id="saveExtraBtn" class="ghost">현재 연구 저장</button>
       <button id="personalListBtn" class="ghost">개인연구 리스트</button>
@@ -239,6 +240,7 @@ const extraFetchBtn=$('extraFetchBtn');
 const extraFile=$('extraFile');
 const ocrPdfBtn=$('ocrPdfBtn');
 const ocrAllPdfBtn=$('ocrAllPdfBtn');
+const extraAnalyzeBtn=$('extraAnalyzeBtn');
 const ocrStartPage=$('ocrStartPage');
 const ocrEndPage=$('ocrEndPage');
 const pdfPageInfo=$('pdfPageInfo');
@@ -282,8 +284,7 @@ analyzeSearchBtn.onclick=()=>analyzeSearchMaterials();
 searchInput.onkeydown=e=>{if(e.key==='Enter')searchJwOrg()};
 
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{
-  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b===btn));
-  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('on',s.id===btn.dataset.tab));
+  activateTab(btn.dataset.tab);
 });
 document.querySelectorAll('[data-mode]').forEach(btn=>btn.onclick=()=>switchMode(btn.dataset.mode));
 
@@ -291,6 +292,7 @@ extraFetchBtn.onclick=async()=>{try{await fetchExtraStudy(extraUrl.value.trim())
 extraFile.onchange=async()=>{try{await loadExtraFile(extraFile.files?.[0])}catch(e){showStatus(e.message)}};
 ocrPdfBtn.onclick=async()=>{try{await reloadLastPdfWithOcr(false)}catch(e){showStatus(e.message)}};
 ocrAllPdfBtn.onclick=async()=>{try{await reloadLastPdfWithOcr(true)}catch(e){showStatus(e.message)}};
+extraAnalyzeBtn.onclick=async()=>{try{await analyzeCurrentStudyWithJw()}catch(e){showStatus(e.message)}};
 personalNewBtn.onclick=()=>newExtraProject();
 personalListBtn.onclick=()=>showPersonalDashboard();
 newExtraBtn.onclick=()=>newExtraProject();
@@ -306,6 +308,10 @@ window.clearProjectSearch=()=>{
 
 function showStatus(msg){statusBox.style.display='block';statusBox.textContent=msg}
 function hideStatus(){statusBox.style.display='none'}
+function activateTab(tabId){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===tabId));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('on',s.id===tabId));
+}
 function isUnlocked(){return sessionStorage.getItem('jwStudyUnlocked')==='1'}
 function updateLoginState(){
   const unlocked=isUnlocked();
@@ -521,7 +527,7 @@ async function loadExtraFile(file){
     currentExtraId='';
     renderData(data);
     updatePdfRepairUi(data);
-    showStatus(data.pdfTextWarning?'PDF 텍스트가 깨질 수 있습니다. 글자가 이상하면 PDF OCR로 다시 읽기를 누르세요.':'PDF 내용을 추가 연구로 불러왔습니다. 주요 내용과 해설 질문을 확인해 보세요.');
+    showStatus(data.pdfTextWarning?'PDF 텍스트가 깨질 수 있습니다. 글자가 이상하면 권장 범위 OCR로 다시 읽은 뒤 자료분석을 누르세요.':'PDF 내용을 불러왔습니다. 자료분석을 누르면 JW.org 관련 자료를 자동으로 찾아 리포트합니다.');
     return;
   }
   const text=await file.text();
@@ -561,7 +567,7 @@ async function reloadLastPdfWithOcr(all=false){
   currentExtraId='';
   renderData(data);
   updatePdfRepairUi(null);
-  showStatus('OCR로 PDF를 다시 읽었습니다. 본문과 리포트를 확인해 보세요.');
+  showStatus('OCR로 PDF를 다시 읽었습니다. 자료분석을 누르면 JW.org 관련 자료를 자동으로 찾아 리포트합니다.');
 }
 function ocrRange(all=false){
   const total=lastPdfPageCount||Number(ocrEndPage.value)||1;
@@ -1459,6 +1465,55 @@ function relatedSearchTerms(){
   const fromData=currentData?importantWords(textOf(currentData.blocks||[])).slice(0,12):[];
   const fromQuestions=currentData?genericStudyQuestions(currentData.blocks||[]).flatMap(x=>importantWords(x).slice(0,2)):[];
   return uniqueTexts([...q,...fromData,...fromQuestions]).filter(x=>String(x).length>1);
+}
+function autoStudySearchQuery(data){
+  const blocks=data?.blocks||[];
+  const titleWords=importantWords(data?.title||'').slice(0,4);
+  const questions=genericStudyQuestions(blocks).flatMap(q=>importantWords(q).slice(0,3));
+  const points=topPoints(blocks,6).flatMap(point=>importantWords(point).slice(0,3));
+  const bodyWords=importantWords(textOf(blocks)).slice(0,12);
+  const words=uniqueTexts([...titleWords,...questions,...points,...bodyWords])
+    .filter(word=>!/^(OCR|PDF|쪽|연구|자료|본문|분석|리포트)$/.test(String(word)));
+  return {
+    query: words.slice(0,4).join(' '),
+    terms: words.slice(0,16).join(' ')
+  };
+}
+async function analyzeCurrentStudyWithJw(){
+  if(!currentData){showStatus('먼저 PDF OCR이나 연구 자료를 불러오세요.');return}
+  const w=workerUrl.value.trim().replace(/\/$/,'');
+  if(!w){showStatus('Worker 주소가 없어 JW.org 자료분석을 실행할 수 없습니다.');return}
+  const search=autoStudySearchQuery(currentData);
+  if(!search.query||search.query.length<2){showStatus('본문에서 자료분석에 사용할 검색어를 찾지 못했습니다.');return}
+  extraAnalyzeBtn.disabled=true;
+  extraAnalyzeBtn.textContent='분석 중...';
+  showStatus(`JW.org에서 관련 자료를 찾고 분석하는 중입니다: ${search.query}`);
+  try{
+    const api=w+'/?mode=search&q='+encodeURIComponent(search.query)+'&terms='+encodeURIComponent(search.terms)+'&limit=20';
+    const res=await fetch(api);
+    const data=await res.json();
+    if(!res.ok||data.error)throw new Error(data.error||('Worker 응답 오류: '+res.status));
+    const pages=uniquePages(data.relatedPages||[]).filter(page=>!page.error);
+    if(!pages.length){showStatus('JW.org에서 관련 자료 후보를 찾지 못했습니다. 본문 단어나 질문으로 직접 검색해 보세요.');return}
+    const selected=pages.slice(0,8);
+    lastSearchData=data;
+    lastSearchPages=pages;
+    lastSearchSelectedUrls=selected.map(page=>page.url).filter(Boolean);
+    lastSearchAnalysisPages=selected;
+    currentData.relatedPages=uniquePages([...(currentData.relatedPages||[]),...pages]);
+    currentData.related=uniqueLinks([...(currentData.related||[]),...(data.results||[]).map(item=>({url:item.url,text:item.text||item.query||item.url,type:'JW.org 검색'}))]);
+    const html=buildSearchAnalysisReport(selected);
+    searchResults.innerHTML=html;
+    relatedTab.innerHTML=renderRelatedPages(currentData);
+    linksTab.innerHTML=renderLinks(currentData);
+    report.innerHTML=html+buildReport(currentData);
+    hydrateDraftInputs();
+    activateTab('report');
+    showStatus(`자료분석 완료: JW.org 관련 자료 ${selected.length}개를 리포트에 반영했습니다.`);
+  }finally{
+    extraAnalyzeBtn.disabled=false;
+    extraAnalyzeBtn.textContent='자료분석';
+  }
 }
 async function searchJwOrg(){
   const q=searchInput.value.trim();
